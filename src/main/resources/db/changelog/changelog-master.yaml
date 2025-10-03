@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-all-tables
+      author: Jay Chouksey
+      comment: create all required tables
+      changes:
+        - sqlFile:
+            dbms: mysql
+            encoding: utf8
+            path: common/001-create-all-tables.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+
+  - changeSet:
+      id: 002-insert-base-roles
+      author: Jay Chouksey
+      comment: insert all base roles
+      changes:
+        - sqlFile:
+            dbms: mysql
+            encoding: utf8
+            path: common/002-insert-base-roles.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+
+  - changeSet:
+      id: 003-insert-super-admin
+      author: Jay Chouksey
+      comment: insert the super admin
+      changes:
+        - sqlFile:
+            dbms: mysql
+            encoding: utf8
+            path: common/003-insert-super-admin.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
