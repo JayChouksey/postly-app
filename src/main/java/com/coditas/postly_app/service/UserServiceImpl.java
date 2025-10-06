@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto registerUser(UserRequestDto userRequestDto) {
+    public String registerUser(UserRequestDto userRequestDto) {
         if (userRepository.existsByEmail(userRequestDto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
@@ -53,7 +53,8 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userRequestDto.getPassword()));
         user.setRole(defaultRole);
 
-        return mapToDto(userRepository.save(user));
+        userRepository.save(user);
+        return "Sign Up Successful";
     }
 
     @Override
@@ -74,7 +75,6 @@ public class UserServiceImpl implements UserService {
         loginDto.setId(savedUser.getId());
         loginDto.setEmail(savedUser.getEmail());
         loginDto.setUsername(savedUser.getUsername());
-        loginDto.setIsModerator(savedUser.getIsModerator());
         loginDto.setRole(String.valueOf(savedUser.getRole().getName()));
         loginDto.setToken(jwtToken);
 
@@ -98,17 +98,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto applyForModerator(Long userId) {
+    public String resignAsModerator(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        // user.setModeratorRequested(true);
-        return mapToDto(userRepository.save(user));
-    }
 
-    @Override
-    public UserDto resignAsModerator(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setIsModerator(false);
-        return mapToDto(userRepository.save(user));
+        Role authorRole = roleRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Author role not found"));
+
+        user.setRole(authorRole);
+        userRepository.save(user);
+
+        return "Resigned Successfully!";
     }
 
     private UserDto mapToDto(User user) {
@@ -117,7 +116,6 @@ public class UserServiceImpl implements UserService {
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setRole(String.valueOf(user.getRole().getName()));
-        dto.setModerator(user.getIsModerator());
         return dto;
     }
 }

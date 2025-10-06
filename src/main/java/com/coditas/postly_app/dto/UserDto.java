@@ -7,6 +7,5 @@ public class UserDto {
     private Long id;
     private String username;
     private String email;
-    private String role;   // Role name only
-    private boolean isModerator;
+    private String role;
 }

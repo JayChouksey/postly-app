@@ -21,7 +21,7 @@ public class Role {
     private String description;
 
     public enum RoleName {
-        AUTHOR, ADMIN, SUPER_ADMIN
+        AUTHOR, MODERATOR, ADMIN, SUPER_ADMIN
     }
 }
 

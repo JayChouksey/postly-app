@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ModeratorRequestRepository extends JpaRepository<ModeratorRequest, Long> {
     List<ModeratorRequest> findByUser(User user);
-    List<ModeratorRequest> findByStatus(String status);
+    List<ModeratorRequest> findAllByStatus(ModeratorRequest.Status status);
 }

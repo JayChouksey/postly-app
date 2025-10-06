@@ -9,6 +9,4 @@ public class LoginDto {
     String email;
     String token;
     String role;
-    Boolean isModerator;
-
 }

@@ -1,58 +1,39 @@
 package com.coditas.postly_app.service;
 
 import com.coditas.postly_app.dto.AdminRequestDto;
-import com.coditas.postly_app.entity.AdminRequest;
+import com.coditas.postly_app.dto.AdminUpdateRequestDto;
+import com.coditas.postly_app.dto.UserRequestDto;
+import com.coditas.postly_app.entity.Role;
 import com.coditas.postly_app.entity.User;
 import com.coditas.postly_app.repository.AdminRequestRepository;
+import com.coditas.postly_app.repository.RoleRepository;
 import com.coditas.postly_app.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-public class AdminRequestServiceImpl{
-//public class AdminRequestServiceImpl implements AdminRequestService {
+@RequiredArgsConstructor
+public class AdminRequestServiceImpl implements AdminRequestService {
 
-    private final AdminRequestRepository requestRepository;
-    private final UserRepository userRepository;
+    AdminRequestRepository adminRequestRepository;
 
-    @Autowired
-    public AdminRequestServiceImpl(AdminRequestRepository requestRepository, UserRepository userRepository) {
-        this.requestRepository = requestRepository;
-        this.userRepository = userRepository;
+    @Override
+    public String createRequest(UserRequestDto userRequestDto) {
+        return "";
     }
 
-//    @Override
-//    public AdminRequestDto createRequest(Long userId) {
-//        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-//        AdminRequest request = new AdminRequest();
-//        request.setUser(user);
-//        request.setStatus(AdminRequest.Status.PENDING);
-//        return mapToDto(requestRepository.save(request));
-//    }
-//
-//    @Override
-//    public List<AdminRequestDto> getAllRequests() {
-//        return requestRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    public AdminRequestDto reviewRequest(Long requestId, Long superAdminId, boolean approved) {
-//        AdminRequest request = requestRepository.findById(requestId).orElseThrow(() -> new RuntimeException("Request not found"));
-//        request.setStatus(approved ? AdminRequest.Status.APPROVED : AdminRequest.Status.REJECTED);
-//        return mapToDto(requestRepository.save(request));
-//    }
-//
-//    private AdminRequestDto mapToDto(AdminRequest request) {
-//        AdminRequestDto dto = new AdminRequestDto();
-//        dto.setId(request.getId());
-//        dto.setStatus(String.valueOf(request.getStatus()));
-//        dto.setUsername(request.getUser().getUsername());
-//        dto.setRequestedAt(request.getRequestedAt());
-//        dto.setReviewedBy(request.getReviewedBy());
-//        return dto;
-//    }
+    @Override
+    public List<AdminRequestDto> getAllPendingRequests() {
+        return List.of();
+    }
+
+    @Override
+    public AdminRequestDto reviewRequest(Long requestId, AdminUpdateRequestDto adminUpdateRequestDto) {
+        return null;
+    }
 }
 

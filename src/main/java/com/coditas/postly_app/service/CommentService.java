@@ -6,7 +6,7 @@ import com.coditas.postly_app.dto.CommentRequestDto;
 import java.util.List;
 
 public interface CommentService {
-    CommentDto addComment(Long userId, CommentRequestDto requestDto);
+    CommentDto addComment(CommentRequestDto requestDto);
     CommentDto updateComment(Long commentId, CommentRequestDto requestDto);
 //    void deleteComment(Long commentId, Long userId);
     List<CommentDto> getCommentsByPost(Long postId);

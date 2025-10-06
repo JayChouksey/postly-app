@@ -10,6 +10,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPost(Post post);
     List<Comment> findByPostId(Long postId);
     List<Comment> findByAuthor(User author);
-    List<Comment> findByStatus(String status);
+    List<Comment> findByStatus(Comment.Status status);
 }
 

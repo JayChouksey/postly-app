@@ -6,11 +6,12 @@ import com.coditas.postly_app.dto.PostRequestDto;
 import java.util.List;
 
 public interface PostService {
-    PostDto createPost(PostRequestDto postRequestDto);
+    String createPost(PostRequestDto postRequestDto);
     PostDto updatePost(Long postId, PostRequestDto postRequestDto);
     void deletePost(Long postId, Long userId);
     List<PostDto> getAllApprovedPosts();
     List<PostDto> getPostsByUser(Long userId);
+    List<PostDto> getPostsByUserAndStatus(Long userId, String status);
     PostDto approvePost(Long postId, Long reviewerId, boolean approved);
     PostDto getPostById(Long id);
 }

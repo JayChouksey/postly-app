@@ -17,7 +17,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<PostDto> createPost(@RequestBody PostRequestDto request) {
+    public ResponseEntity<String> createPost(@RequestBody PostRequestDto request) {
         return ResponseEntity.ok(postService.createPost(request));
     }
 
@@ -34,6 +34,11 @@ public class PostController {
     @GetMapping("/user/{id}")
     public ResponseEntity<List<PostDto>> getPostByUserId(@PathVariable Long id) {
         return ResponseEntity.ok(postService.getPostsByUser(id));
+    }
+
+    @GetMapping("/user/{id}/status/{status}")
+    public ResponseEntity<List<PostDto>> getPostUserIdAndStatus(@PathVariable Long id, @PathVariable String status) {
+        return ResponseEntity.ok(postService.getPostsByUserAndStatus(id, status));
     }
 
     @PutMapping("/{id}")

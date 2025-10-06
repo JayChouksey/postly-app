@@ -1,7 +1,9 @@
 package com.coditas.postly_app.service;
 
+import com.coditas.postly_app.dto.CommentDto;
 import com.coditas.postly_app.dto.PostDto;
 import com.coditas.postly_app.dto.PostRequestDto;
+import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.entity.User;
 import com.coditas.postly_app.repository.PostRepository;
@@ -25,7 +27,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostDto createPost(PostRequestDto postRequestDto) {
+    public String createPost(PostRequestDto postRequestDto) {
         User author = userRepository.findById(postRequestDto.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -35,9 +37,9 @@ public class PostServiceImpl implements PostService {
         post.setAuthor(author);
         post.setStatus(Post.Status.PENDING);
 
-        Post saved = postRepository.save(post);
+        postRepository.save(post);
 
-        return mapToDto(saved);
+        return "Post create successfully!";
     }
 
     @Override
@@ -78,6 +80,22 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public List<PostDto> getPostsByUserAndStatus(Long userId, String status) {
+
+        // Convert the incoming status string (e.g., "approved") into Post.Status enum
+        Post.Status postStatus;
+        try {
+            postStatus = Post.Status.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid post status: " + status);
+        }
+
+        return postRepository.findByAuthorIdAndStatus(userId, postStatus)
+                .stream().map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public PostDto approvePost(Long postId, Long reviewerId, boolean approved) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -103,6 +121,24 @@ public class PostServiceImpl implements PostService {
         dto.setStatus(String.valueOf(post.getStatus()));
         dto.setAuthorName(post.getAuthor().getUsername());
         dto.setCreatedAt(post.getCreatedAt());
+
+        // Map approved comments
+        List<CommentDto> approvedComments = post.getComments().stream()
+                .filter(c -> c.getStatus() == Comment.Status.APPROVED) // only approved
+                .map(c -> {
+                    CommentDto cdto = new CommentDto();
+                    cdto.setId(c.getId());
+                    cdto.setContent(c.getContent());
+                    cdto.setStatus(String.valueOf(c.getStatus()));
+                    cdto.setAuthorName(c.getAuthor().getUsername());
+                    cdto.setPostId(c.getPost().getId());
+                    cdto.setCreatedAt(c.getCreatedAt());
+                    return cdto;
+                })
+                .toList();
+
+        dto.setApprovedComments(approvedComments);
+
         return dto;
     }
 }

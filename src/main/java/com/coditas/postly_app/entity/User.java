@@ -30,8 +30,6 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    private Boolean isModerator = false;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -29,8 +29,8 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto addComment(Long userId, CommentRequestDto requestDto) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    public CommentDto addComment(CommentRequestDto requestDto) {
+        User user = userRepository.findById(requestDto.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(requestDto.getPostId()).orElseThrow(() -> new RuntimeException("Post not found"));
 
         Comment comment = new Comment();
