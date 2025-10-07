@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class ModeratorActionDto {
+    Long reviewerId;
     String action;
 }

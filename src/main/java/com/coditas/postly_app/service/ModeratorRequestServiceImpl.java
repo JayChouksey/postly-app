@@ -66,7 +66,7 @@ public class ModeratorRequestServiceImpl implements ModeratorRequestService {
 
         String action = moderatorUpdateRequestDto.getAction();
 
-        if (action.equalsIgnoreCase("APPROVE")) {
+        if (action.equalsIgnoreCase("APPROVED")) {
             request.setStatus(ModeratorRequest.Status.APPROVED);
             request.setReviewedBy(admin);
             request.setReviewedAt(LocalDateTime.now());
@@ -77,7 +77,7 @@ public class ModeratorRequestServiceImpl implements ModeratorRequestService {
             User user = request.getUser();
             user.setRole(moderatorRole);
             userRepository.save(user);
-        } else if (action.equalsIgnoreCase("REJECT")) {
+        } else if (action.equalsIgnoreCase("REJECTED")) {
             request.setStatus(ModeratorRequest.Status.REJECTED);
             request.setReviewedBy(admin);
             request.setReviewedAt(LocalDateTime.now());

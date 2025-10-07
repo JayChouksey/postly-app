@@ -61,12 +61,15 @@ CREATE TABLE moderator_requests (
 -- 6. Admin Requests (admin -> super admin)
 CREATE TABLE admin_requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    temp_password VARCHAR(255) NOT NULL,
+    requested_by BIGINT NOT NULL,
     status ENUM('PENDING','APPROVED','REJECTED') DEFAULT 'PENDING',
-    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reviewed_by BIGINT NULL,
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewed_by) REFERENCES users(id)
 );
 

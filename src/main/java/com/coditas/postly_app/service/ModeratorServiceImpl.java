@@ -5,11 +5,18 @@ import com.coditas.postly_app.dto.ModeratorActionDto;
 import com.coditas.postly_app.dto.PostDto;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
+import com.coditas.postly_app.entity.ReviewLog;
+import com.coditas.postly_app.entity.User;
 import com.coditas.postly_app.repository.CommentRepository;
 import com.coditas.postly_app.repository.PostRepository;
+import com.coditas.postly_app.repository.ReviewLogRepository;
+import com.coditas.postly_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +26,8 @@ public class ModeratorServiceImpl implements ModeratorService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final ReviewLogRepository reviewLogRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<PostDto> getPostsByStatus(Post.Status status) {
@@ -33,15 +42,23 @@ public class ModeratorServiceImpl implements ModeratorService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if ("APPROVE".equalsIgnoreCase(action.getAction())) {
-            post.setStatus(Post.Status.APPROVED);
-        } else if ("REJECT".equalsIgnoreCase(action.getAction())) {
-            post.setStatus(Post.Status.DISAPPROVED);
+        // Determine new status
+        Post.Status newStatus;
+        if ("APPROVED".equalsIgnoreCase(action.getAction())) {
+            newStatus = Post.Status.APPROVED;
+        } else if ("DISAPPROVED".equalsIgnoreCase(action.getAction())) {
+            newStatus = Post.Status.DISAPPROVED;
         } else {
             throw new RuntimeException("Invalid action");
         }
 
-        return mapPostToDto(postRepository.save(post));
+        post.setStatus(newStatus);
+        postRepository.save(post);
+
+        // Save review log
+        saveReviewLog("POST", post.getId(), action);
+
+        return mapPostToDto(post);
     }
 
     @Override
@@ -57,15 +74,43 @@ public class ModeratorServiceImpl implements ModeratorService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found"));
 
-        if ("APPROVE".equalsIgnoreCase(action.getAction())) {
-            comment.setStatus(Comment.Status.APPROVED);
-        } else if ("REJECT".equalsIgnoreCase(action.getAction())) {
-            comment.setStatus(Comment.Status.DISAPPROVED);
+        Comment.Status newStatus;
+        if ("APPROVED".equalsIgnoreCase(action.getAction())) {
+            newStatus = Comment.Status.APPROVED;
+        } else if ("DISAPPROVED".equalsIgnoreCase(action.getAction())) {
+            newStatus = Comment.Status.DISAPPROVED;
         } else {
             throw new RuntimeException("Invalid action");
         }
 
-        return mapCommentToDto(commentRepository.save(comment));
+        comment.setStatus(newStatus);
+        commentRepository.save(comment);
+
+        // Save review log
+        saveReviewLog("COMMENT", comment.getId(), action);
+
+        return mapCommentToDto(comment);
+    }
+
+    // Helper method to save review log entry
+    private void saveReviewLog(String entityType, Long entityId, ModeratorActionDto action) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String reviewerEmail = authentication.getName();
+
+        // Build review log entry
+        ReviewLog log = new ReviewLog();
+        log.setEntityType(ReviewLog.EntityType.valueOf(entityType));
+        log.setEntityId(entityId);
+        log.setAction(ReviewLog.Action.valueOf(action.getAction().toUpperCase()));
+        log.setReviewedAt(LocalDateTime.now());
+
+        // Reviewer mapping (fetch User by email)
+        User reviewer = userRepository.findById(action.getReviewerId())
+                .orElseThrow(() -> new RuntimeException("Reviewer not found"));
+        reviewer.setEmail(reviewerEmail);
+        log.setReviewer(reviewer);
+
+        reviewLogRepository.save(log);
     }
 
     private PostDto mapPostToDto(Post post) {

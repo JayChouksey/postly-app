@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AdminRequestRepository extends JpaRepository<AdminRequest, Long> {
-    List<AdminRequest> findByUser(User user);
-    List<AdminRequest> findByStatus(String status);
+    List<AdminRequest> findByRequestedBy(User requestedBy);
+    List<AdminRequest> findAllByStatus(AdminRequest.Status status);
 }
 

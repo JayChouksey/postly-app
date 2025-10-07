@@ -62,14 +62,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAnyRole("MODERATOR", "ADMIN")
 
-                        // moderator / admin requests
+                        // moderator requests
                         .requestMatchers(HttpMethod.POST, "/api/moderator-requests/request/**").hasRole("AUTHOR")
                         .requestMatchers(HttpMethod.GET, "/api/moderator-requests/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/moderator-requests/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("SUPERADMIN")
+
+                        // admin requests
+                        .requestMatchers(HttpMethod.POST, "/api/admin-requests/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin-requests/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin-requests/**").hasRole("SUPER_ADMIN")
 
                         // review logs (only admins/superadmins)
-                        .requestMatchers("/api/review-logs/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/review-logs/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                         // any other request must be authenticated
                         .anyRequest().authenticated()
