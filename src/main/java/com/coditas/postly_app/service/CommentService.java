@@ -8,7 +8,6 @@ import java.util.List;
 public interface CommentService {
     CommentDto addComment(CommentRequestDto requestDto);
     CommentDto updateComment(Long commentId, CommentRequestDto requestDto);
-//    void deleteComment(Long commentId, Long userId);
+    void deleteComment(Long commentId);
     List<CommentDto> getCommentsByPost(Long postId);
-    CommentDto approveComment(Long commentId, Long reviewerId, boolean approved);
 }

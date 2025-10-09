@@ -7,11 +7,13 @@ import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.entity.ReviewLog;
 import com.coditas.postly_app.entity.User;
+import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.repository.CommentRepository;
 import com.coditas.postly_app.repository.PostRepository;
 import com.coditas.postly_app.repository.ReviewLogRepository;
 import com.coditas.postly_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,17 @@ public class ModeratorServiceImpl implements ModeratorService {
     @Override
     public PostDto reviewPost(Long postId, ModeratorActionDto action) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found"));
+                .orElseThrow(() -> new CustomException("Post not found", HttpStatus.NOT_FOUND));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String reviewerEmail = auth.getName();
+        User reviewer = userRepository.findByEmail(reviewerEmail)
+                .orElseThrow(() -> new CustomException("Reviewer not found", HttpStatus.NOT_FOUND));
+
+        // Prevent reviewing own post
+        if (post.getAuthor().getId().equals(reviewer.getId())) {
+            throw new CustomException("You cannot review your own post", HttpStatus.FORBIDDEN);
+        }
 
         // Determine new status
         Post.Status newStatus;
@@ -49,14 +61,14 @@ public class ModeratorServiceImpl implements ModeratorService {
         } else if ("DISAPPROVED".equalsIgnoreCase(action.getAction())) {
             newStatus = Post.Status.DISAPPROVED;
         } else {
-            throw new RuntimeException("Invalid action");
+            throw new CustomException("Invalid action", HttpStatus.BAD_REQUEST);
         }
 
         post.setStatus(newStatus);
         postRepository.save(post);
 
         // Save review log
-        saveReviewLog("POST", post.getId(), action);
+        saveReviewLog(reviewer, "POST", post.getId(), action);
 
         return mapPostToDto(post);
     }
@@ -72,7 +84,17 @@ public class ModeratorServiceImpl implements ModeratorService {
     @Override
     public CommentDto reviewComment(Long commentId, ModeratorActionDto action) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found"));
+                .orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String reviewerEmail = auth.getName();
+        User reviewer = userRepository.findByEmail(reviewerEmail)
+                .orElseThrow(() -> new CustomException("Reviewer not found", HttpStatus.NOT_FOUND));
+
+        // Prevent reviewing own comment
+        if (comment.getAuthor().getId().equals(reviewer.getId())) {
+            throw new CustomException("You cannot review your own comment", HttpStatus.FORBIDDEN);
+        }
 
         Comment.Status newStatus;
         if ("APPROVED".equalsIgnoreCase(action.getAction())) {
@@ -80,35 +102,26 @@ public class ModeratorServiceImpl implements ModeratorService {
         } else if ("DISAPPROVED".equalsIgnoreCase(action.getAction())) {
             newStatus = Comment.Status.DISAPPROVED;
         } else {
-            throw new RuntimeException("Invalid action");
+            throw new CustomException("Invalid action", HttpStatus.BAD_REQUEST);
         }
 
         comment.setStatus(newStatus);
         commentRepository.save(comment);
 
         // Save review log
-        saveReviewLog("COMMENT", comment.getId(), action);
+        saveReviewLog(reviewer, "COMMENT", comment.getId(), action);
 
         return mapCommentToDto(comment);
     }
 
     // Helper method to save review log entry
-    private void saveReviewLog(String entityType, Long entityId, ModeratorActionDto action) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String reviewerEmail = authentication.getName();
-
-        // Build review log entry
+    private void saveReviewLog(User reviewer, String entityType, Long entityId, ModeratorActionDto action) {
         ReviewLog log = new ReviewLog();
+        log.setReviewer(reviewer);
         log.setEntityType(ReviewLog.EntityType.valueOf(entityType));
         log.setEntityId(entityId);
         log.setAction(ReviewLog.Action.valueOf(action.getAction().toUpperCase()));
         log.setReviewedAt(LocalDateTime.now());
-
-        // Reviewer mapping (fetch User by email)
-        User reviewer = userRepository.findById(action.getReviewerId())
-                .orElseThrow(() -> new RuntimeException("Reviewer not found"));
-        reviewer.setEmail(reviewerEmail);
-        log.setReviewer(reviewer);
 
         reviewLogRepository.save(log);
     }
@@ -135,4 +148,3 @@ public class ModeratorServiceImpl implements ModeratorService {
         return dto;
     }
 }
-

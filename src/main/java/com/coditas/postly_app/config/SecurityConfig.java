@@ -52,15 +52,15 @@ public class SecurityConfig {
 
                         // posts (accessible to users and moderators/admins)
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasRole("AUTHOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("MODERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("AUTHOR","ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("AUTHOR","MODERATOR","ADMIN", "SUPER_ADMIN")
 
                         // comments (users can CRUD, moderators/admins review)
-                        .requestMatchers(HttpMethod.POST, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAnyRole("AUTHOR","MODERATOR","ADMIN", "SUPER_ADMIN")
 
                         // moderator requests
                         .requestMatchers(HttpMethod.POST, "/api/moderator-requests/request/**").hasRole("AUTHOR")

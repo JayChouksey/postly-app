@@ -8,4 +8,5 @@ import java.util.List;
 public interface ModeratorRequestRepository extends JpaRepository<ModeratorRequest, Long> {
     List<ModeratorRequest> findByUser(User user);
     List<ModeratorRequest> findAllByStatus(ModeratorRequest.Status status);
+    boolean existsByUserIdAndStatus(Long userId, ModeratorRequest.Status status);
 }

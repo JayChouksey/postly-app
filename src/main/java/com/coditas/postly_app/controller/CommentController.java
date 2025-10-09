@@ -31,11 +31,10 @@ public class CommentController {
         return ResponseEntity.ok(commentService.updateComment(id, request));
     }
 
-    // TODO: Later
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
-//        commentService.deleteComment(id);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
+        commentService.deleteComment(id);
+        return ResponseEntity.noContent().build();
+    }
 }
 

@@ -1,6 +1,7 @@
 package com.coditas.postly_app.controller;
 
 import com.coditas.postly_app.dto.UserDto;
+import com.coditas.postly_app.dto.UserDtoById;
 import com.coditas.postly_app.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +25,8 @@ public class UserController {
 
     // Get user by ID
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
-        UserDto user = userService.getUserById(id);
+    public ResponseEntity<UserDtoById> getUserById(@PathVariable Long id) {
+        UserDtoById user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
 

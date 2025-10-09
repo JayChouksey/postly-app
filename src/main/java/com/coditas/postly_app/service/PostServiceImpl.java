@@ -6,9 +6,13 @@ import com.coditas.postly_app.dto.PostRequestDto;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.entity.User;
+import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.repository.PostRepository;
 import com.coditas.postly_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,18 +52,29 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         post.setTitle(postRequestDto.getTitle());
         post.setContent(postRequestDto.getContent());
+        post.setStatus(Post.Status.PENDING);
+
+        if (!post.getAuthor().getId().equals(postRequestDto.getUserId())) {
+            throw new CustomException("You cannot update someone else’s post", HttpStatus.FORBIDDEN);
+        }
 
         return mapToDto(postRepository.save(post));
     }
 
     @Override
-    public void deletePost(Long postId, Long userId) {
+    public void deletePost(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!post.getAuthor().getId().equals(userId)) {
-            throw new RuntimeException("You cannot delete someone else's post");
-        }
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        String authorEmail = auth.getName();
+//        User author = userRepository.findByEmail(authorEmail)
+//                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
+//
+//        if (!post.getAuthor().getId().equals(author.getId())) {
+//            throw new CustomException("You cannot delete someone else’s post", HttpStatus.FORBIDDEN);
+//        }
+
         postRepository.delete(post);
     }
 
