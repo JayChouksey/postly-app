@@ -1,8 +1,10 @@
 package com.coditas.postly_app.util;
 
 import com.coditas.postly_app.entity.User;
+import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,7 +26,8 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = repository.findByEmail(username).orElseThrow();
+        User user = repository.findByEmail(username)
+                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getName());
 

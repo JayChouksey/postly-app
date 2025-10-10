@@ -37,6 +37,10 @@ public class CommentServiceImpl implements CommentService {
         User user = userRepository.findById(requestDto.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
         Post post = postRepository.findById(requestDto.getPostId()).orElseThrow(() -> new RuntimeException("Post not found"));
 
+        if(post.getStatus() != Post.Status.APPROVED){
+            throw new CustomException("Comment can only done on Approved Posts", HttpStatus.FORBIDDEN);
+        }
+
         Comment comment = new Comment();
         comment.setContent(requestDto.getContent());
         comment.setAuthor(user);

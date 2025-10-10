@@ -73,13 +73,14 @@ public class UserServiceImpl implements UserService {
                     )
             );
 
+            // Fetch the user safely
+            User savedUser = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
+
             if (!authentication.isAuthenticated()) {
                 throw new CustomException("Invalid email or password", HttpStatus.UNAUTHORIZED);
             }
 
-            // Fetch the user safely
-            User savedUser = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
             // Generate JWT
             String jwtToken = jwtService.generateToken(request.getEmail());
