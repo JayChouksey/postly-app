@@ -9,6 +9,15 @@ public interface UserService {
     LoginDto login(LoginRequestDto loginRequestDto);
     List<UserDto> getAllUsers();
     UserDtoById getUserById(Long id);
-    void deleteUser(Long id);
+    String deleteUser(Long id);
+
+    String createModeratorRequest(Long userId);
+    List<ModeratorRequestDto> getAllModeratorPendingRequests();
+    ModeratorRequestDto reviewModeratorRequest(Long requestId, ModeratorUpdateRequestDto moderatorUpdateRequestDto);
     String resignAsModerator(Long userId);
+
+    String createAdminRequest(UserRequestDto userRequestDto);
+    List<AdminRequestDto> getAllAdminPendingRequests();
+    AdminRequestDto reviewAdminRequest(Long requestId, AdminUpdateRequestDto adminUpdateRequestDto);
+
 }

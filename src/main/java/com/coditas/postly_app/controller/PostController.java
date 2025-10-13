@@ -1,10 +1,14 @@
 package com.coditas.postly_app.controller;
 
+import com.coditas.postly_app.dto.ApiResponseDto;
 import com.coditas.postly_app.dto.PostDto;
 import com.coditas.postly_app.dto.PostRequestDto;
 import com.coditas.postly_app.service.PostService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,36 +21,73 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping
-    public ResponseEntity<String> createPost(@RequestBody PostRequestDto request) {
-        return ResponseEntity.ok(postService.createPost(request));
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
+    public ResponseEntity<ApiResponseDto<String>> createPost(@RequestBody @Valid PostRequestDto request) {
+
+        String data = postService.createPost(request);
+
+        ApiResponseDto<String> responseBody = new ApiResponseDto<>(true, "Post Created", data);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
     }
 
-    @GetMapping("/approved")
-    public ResponseEntity<List<PostDto>> getAllApprovedPosts() {
-        return ResponseEntity.ok(postService.getAllApprovedPosts());
+    @GetMapping("status/approved")
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponseDto<List<PostDto>>> getAllApprovedPosts() {
+
+        List<PostDto> data = postService.getAllApprovedPosts();
+
+        ApiResponseDto<List<PostDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched", data);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostDto> getPostById(@PathVariable Long id) {
-        return ResponseEntity.ok(postService.getPostById(id));
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponseDto<PostDto>> getPostById(@PathVariable Long id) {
+
+        PostDto data = postService.getPostById(id);
+
+        ApiResponseDto<PostDto> responseBody = new ApiResponseDto<>(true, "Post fetched", data);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<PostDto>> getPostByUserId(@PathVariable Long id) {
-        return ResponseEntity.ok(postService.getPostsByUser(id));
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponseDto<List<PostDto>>> getPostByUserId(@PathVariable Long id) {
+
+        List<PostDto> data = postService.getPostsByUser(id);
+
+        ApiResponseDto<List<PostDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched", data);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/user/{id}/status/{status}")
-    public ResponseEntity<List<PostDto>> getPostUserIdAndStatus(@PathVariable Long id, @PathVariable String status) {
-        return ResponseEntity.ok(postService.getPostsByUserAndStatus(id, status));
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<ApiResponseDto<List<PostDto>>> getPostUserIdAndStatus(@PathVariable Long id, @PathVariable String status) {
+
+        List<PostDto> data = postService.getPostsByUserAndStatus(id, status);
+
+        ApiResponseDto<List<PostDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched", data);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PostDto> updatePost(@PathVariable Long id, @RequestBody PostRequestDto request) {
-        return ResponseEntity.ok(postService.updatePost(id, request));
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
+    public ResponseEntity<ApiResponseDto<PostDto>> updatePost(@PathVariable Long id, @RequestBody PostRequestDto request) {
+
+        PostDto data = postService.updatePost(id, request);
+
+        ApiResponseDto<PostDto> responseBody = new ApiResponseDto<>(true, "Post Updated", data);
+
+        return ResponseEntity.ok(responseBody);
     }
 
     @DeleteMapping("/{postId}")
+    @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
         return ResponseEntity.noContent().build();

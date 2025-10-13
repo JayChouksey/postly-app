@@ -1,17 +1,20 @@
 package com.coditas.postly_app.service;
 
+import com.coditas.postly_app.dto.ModeratorActionDto;
 import com.coditas.postly_app.dto.PostDto;
 import com.coditas.postly_app.dto.PostRequestDto;
+import com.coditas.postly_app.entity.Post;
 
 import java.util.List;
 
 public interface PostService {
     String createPost(PostRequestDto postRequestDto);
-    PostDto updatePost(Long postId, PostRequestDto postRequestDto);
-    void deletePost(Long postId);
     List<PostDto> getAllApprovedPosts();
+    List<PostDto> getPostsByStatus(Post.Status status);
     List<PostDto> getPostsByUser(Long userId);
     List<PostDto> getPostsByUserAndStatus(Long userId, String status);
-    PostDto approvePost(Long postId, Long reviewerId, boolean approved);
     PostDto getPostById(Long id);
+    PostDto updatePost(Long postId, PostRequestDto postRequestDto);
+    PostDto reviewPost(Long postId, ModeratorActionDto action);
+    void deletePost(Long postId);
 }

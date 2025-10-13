@@ -1,25 +1,29 @@
 package com.coditas.postly_app.service;
 
 import com.coditas.postly_app.dto.*;
+import com.coditas.postly_app.entity.AdminRequest;
 import com.coditas.postly_app.entity.ModeratorRequest;
 import com.coditas.postly_app.entity.Role;
 import com.coditas.postly_app.entity.User;
 import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.exception.EmailAlreadyExistsException;
+import com.coditas.postly_app.repository.AdminRequestRepository;
 import com.coditas.postly_app.repository.ModeratorRequestRepository;
 import com.coditas.postly_app.repository.RoleRepository;
 import com.coditas.postly_app.repository.UserRepository;
 import com.coditas.postly_app.util.JwtService;
-import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,15 +32,17 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final ModeratorRequestRepository moderatorRequestRepository;
+    private final AdminRequestRepository adminRequestRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authManager;
     private final JwtService jwtService;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ModeratorRequestRepository moderatorRequestRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, AuthenticationManager authManager, JwtService jwtService) {
+    public UserServiceImpl(UserRepository userRepository, ModeratorRequestRepository moderatorRequestRepository, AdminRequestRepository adminRequestRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, AuthenticationManager authManager, JwtService jwtService) {
         this.userRepository = userRepository;
         this.moderatorRequestRepository = moderatorRequestRepository;
+        this.adminRequestRepository = adminRequestRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authManager = authManager;
@@ -73,13 +79,14 @@ public class UserServiceImpl implements UserService {
                     )
             );
 
+            // Fetch the user safely
+            User savedUser = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
+
             if (!authentication.isAuthenticated()) {
                 throw new CustomException("Invalid email or password", HttpStatus.UNAUTHORIZED);
             }
 
-            // Fetch the user safely
-            User savedUser = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
             // Generate JWT
             String jwtToken = jwtService.generateToken(request.getEmail());
@@ -119,8 +126,76 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public void deleteUser(Long id) {
+    public String deleteUser(Long id) {
+
         userRepository.deleteById(id);
+
+        return "User deleted successfully!";
+    }
+
+    @Override
+    public String createModeratorRequest(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Prevent duplicate pending requests
+        boolean hasPending = moderatorRequestRepository.findByUser(user).stream()
+                .anyMatch(req -> req.getStatus() == ModeratorRequest.Status.PENDING);
+        if (hasPending) {
+            throw new RuntimeException("You already have a pending moderator request.");
+        }
+
+        ModeratorRequest request = ModeratorRequest.builder()
+                .user(user)
+                .status(ModeratorRequest.Status.PENDING)
+                .build();
+
+        moderatorRequestRepository.save(request);
+        return "Request sent successfully!";
+    }
+
+    @Override
+    public List<ModeratorRequestDto> getAllModeratorPendingRequests() {
+        return moderatorRequestRepository.findAllByStatus(ModeratorRequest.Status.PENDING)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ModeratorRequestDto reviewModeratorRequest(Long requestId, ModeratorUpdateRequestDto moderatorUpdateRequestDto) {
+        ModeratorRequest request = moderatorRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        User admin = userRepository.findById(moderatorUpdateRequestDto.getAdminId())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        if (request.getStatus() != ModeratorRequest.Status.PENDING)
+            throw new RuntimeException("Request already reviewed.");
+
+        String action = moderatorUpdateRequestDto.getAction();
+
+        if (action.equalsIgnoreCase("APPROVED")) {
+            request.setStatus(ModeratorRequest.Status.APPROVED);
+            request.setReviewedBy(admin);
+            request.setReviewedAt(LocalDateTime.now());
+
+            // Update user role to MODERATOR
+            Role moderatorRole = roleRepository.findById(2L)
+                    .orElseThrow(() -> new RuntimeException("MODERATOR role not found"));
+            User user = request.getUser();
+            user.setRole(moderatorRole);
+            userRepository.save(user);
+        } else if (action.equalsIgnoreCase("REJECTED")) {
+            request.setStatus(ModeratorRequest.Status.REJECTED);
+            request.setReviewedBy(admin);
+            request.setReviewedAt(LocalDateTime.now());
+        } else {
+            throw new RuntimeException("Invalid action. Use APPROVE or REJECT.");
+        }
+
+        ModeratorRequest updated = moderatorRequestRepository.save(request);
+        return mapToDto(updated);
     }
 
     @Override
@@ -134,6 +209,103 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         return "Resigned Successfully!";
+    }
+
+    @Override
+    public String createAdminRequest(UserRequestDto userRequestDto) {
+
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User requestedByUser = userRepository.findByEmail(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Requester user not found"));
+
+        // Check if request is by Super-Admin
+        String role = String.valueOf(requestedByUser.getRole().getName());
+        Role adminRole = roleRepository.findById(3L)
+                .orElseThrow(() -> new RuntimeException("Admin Role not found"));
+
+        if(role.equals("SUPER_ADMIN")){
+            User newAdmin = User.builder()
+                    .username(userRequestDto.getUsername())
+                    .email(userRequestDto.getEmail())
+                    .password(passwordEncoder.encode(userRequestDto.getPassword()))
+                    .role(adminRole)
+                    .build();
+
+            // then save the admin directly
+            userRepository.save(newAdmin);
+
+            return "Admin Created Successfully";
+        }
+
+        AdminRequest adminRequest = AdminRequest.builder()
+                .username(userRequestDto.getUsername())
+                .email(userRequestDto.getEmail())
+                .tempPassword(passwordEncoder.encode(userRequestDto.getPassword()))
+                .requestedBy(requestedByUser)
+                .build();
+
+        adminRequestRepository.save(adminRequest);
+
+        return "Admin request sent successfully";
+    }
+
+    @Override
+    public List<AdminRequestDto> getAllAdminPendingRequests() {
+        return adminRequestRepository.findAllByStatus(AdminRequest.Status.PENDING)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public AdminRequestDto reviewAdminRequest(Long requestId, AdminUpdateRequestDto adminUpdateRequestDto) {
+
+        // Fetch the request
+        AdminRequest adminRequest = adminRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Admin request not found"));
+
+        // Ensure the request is still pending
+        if (adminRequest.getStatus() != AdminRequest.Status.PENDING) {
+            throw new RuntimeException("Request is already " + adminRequest.getStatus());
+        }
+
+        // Get the reviewer (Super Admin) from the SecurityContext
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User reviewer = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Reviewer not found"));
+
+        // Handle approval or rejection
+        String action = adminUpdateRequestDto.getAction().toUpperCase();
+        Role adminRole = roleRepository.findById(3L)
+                .orElseThrow(() -> new RuntimeException("ADMIN role not found"));
+
+        if ("APPROVED".equalsIgnoreCase(action)) {
+            // Create new Admin user
+            User newAdmin = User.builder()
+                    .username(adminRequest.getUsername())
+                    .email(adminRequest.getEmail())
+                    .password(adminRequest.getTempPassword()) // already encoded
+                    .role(adminRole)
+                    .build();
+
+            userRepository.save(newAdmin);
+            adminRequest.setStatus(AdminRequest.Status.APPROVED);
+        } else if ("REJECTED".equalsIgnoreCase(action))  {
+            adminRequest.setStatus(AdminRequest.Status.REJECTED);
+        } else {
+            throw new RuntimeException("Invalid action. Must be 'APPROVE' or 'REJECT'.");
+        }
+
+        // Update metadata
+        adminRequest.setReviewedBy(reviewer);
+        adminRequest.setReviewedAt(LocalDateTime.now());
+
+        // Save the updated request
+        AdminRequest savedRequest = adminRequestRepository.save(adminRequest);
+
+        // Map to DTO and return
+        return mapToDto(savedRequest);
     }
 
     private UserDto mapToDto(User user) {
@@ -158,6 +330,26 @@ public class UserServiceImpl implements UserService {
         );
 
         dto.setHasRequestedModerator(hasRequested);
+        return dto;
+    }
+
+    private ModeratorRequestDto mapToDto(ModeratorRequest request) {
+        ModeratorRequestDto dto = new ModeratorRequestDto();
+        dto.setId(request.getId());
+        dto.setStatus(request.getStatus().name());
+        dto.setUsername(request.getUser().getUsername());
+        dto.setRequestedAt(request.getRequestedAt());
+        dto.setReviewedBy(request.getReviewedBy() != null ? request.getReviewedBy().getUsername() : null);
+        return dto;
+    }
+
+    private AdminRequestDto mapToDto(AdminRequest request) {
+        AdminRequestDto dto = new AdminRequestDto();
+        dto.setId(request.getId());
+        dto.setStatus(request.getStatus().name());
+        dto.setUsername(request.getUsername());
+        dto.setRequestedAt(request.getRequestedAt());
+        dto.setReviewedBy(request.getReviewedBy() != null ? request.getReviewedBy().getUsername() : null);
         return dto;
     }
 }
