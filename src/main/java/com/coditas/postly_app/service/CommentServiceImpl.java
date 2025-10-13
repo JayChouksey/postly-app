@@ -52,6 +52,10 @@ public class CommentServiceImpl implements CommentService {
             throw new CustomException("Comment can only done on Approved Posts", HttpStatus.FORBIDDEN);
         }
 
+        if(post.getStatus() != Post.Status.APPROVED){
+            throw new CustomException("Comment can only done on Approved Posts", HttpStatus.FORBIDDEN);
+        }
+
         Comment comment = new Comment();
         comment.setContent(requestDto.getContent());
         comment.setAuthor(user);
