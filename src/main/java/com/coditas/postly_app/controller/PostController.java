@@ -42,22 +42,22 @@ public class PostController {
         return ResponseEntity.ok(responseBody);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{postId}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<PostDto>> getPostById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<PostDto>> getPostById(@PathVariable Long postId) {
 
-        PostDto data = postService.getPostById(id);
+        PostDto data = postService.getPostById(postId);
 
         ApiResponseDto<PostDto> responseBody = new ApiResponseDto<>(true, "Post fetched", data);
 
         return ResponseEntity.ok(responseBody);
     }
 
-    @GetMapping("/user/{id}")
+    @GetMapping("/user/{userId}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<PostDto>>> getPostByUserId(@PathVariable Long id) {
+    public ResponseEntity<ApiResponseDto<List<PostDto>>> getPostByUserId(@PathVariable Long userId) {
 
-        List<PostDto> data = postService.getPostsByUser(id);
+        List<PostDto> data = postService.getPostsByUser(userId);
 
         ApiResponseDto<List<PostDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched", data);
 

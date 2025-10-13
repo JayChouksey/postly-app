@@ -10,5 +10,5 @@ public class AdminRequestDto {
     private String status;
     private String username;
     private LocalDateTime requestedAt;
-    private String reviewedBy; // super admin username
+    private String reviewedBy;
 }

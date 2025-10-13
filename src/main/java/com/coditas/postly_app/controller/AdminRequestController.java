@@ -2,6 +2,7 @@ package com.coditas.postly_app.controller;
 
 import com.coditas.postly_app.dto.*;
 import com.coditas.postly_app.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class AdminRequestController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<String>> createAdmin(@RequestBody UserRequestDto userRequestDto) {
+    public ResponseEntity<ApiResponseDto<String>> createAdmin(@RequestBody @Valid UserRequestDto userRequestDto) {
 
         String data = userService.createAdminRequest(userRequestDto);
         ApiResponseDto<String> responseBody = new ApiResponseDto<>(true, "Admin request sent successfully", data);
@@ -42,7 +43,7 @@ public class AdminRequestController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponseDto<AdminRequestDto>> reviewRequest(
             @PathVariable Long requestId,
-            @RequestBody AdminUpdateRequestDto adminUpdateRequestDto
+            @RequestBody @Valid AdminUpdateRequestDto adminUpdateRequestDto
     ) {
 
         AdminRequestDto data = userService.reviewAdminRequest(requestId, adminUpdateRequestDto);

@@ -2,8 +2,10 @@ package com.coditas.postly_app.exception.handler;
 
 import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.exception.EmailAlreadyExistsException;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -66,6 +68,28 @@ public class GlobalExceptionHandler {
         errorResponse.put("status", HttpStatus.UNAUTHORIZED.value());
         errorResponse.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.put("message", "Authentication required: Invalid or missing credentials");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.METHOD_NOT_ALLOWED.value());
+        errorResponse.put("error", HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase());
+        errorResponse.put("message", "HTTP method '" + ex.getMethod() + "' is not supported for this endpoint. Supported methods: " +
+                (ex.getSupportedHttpMethods() != null ? ex.getSupportedHttpMethods() : "None"));
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<Map<String, Object>> handleExpiredJwtException(ExpiredJwtException ex) {
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.UNAUTHORIZED.value());
+        errorResponse.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
+        errorResponse.put("message", "JWT token has expired: " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 }

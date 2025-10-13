@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
         // TODO: Its a Jugaad, Fix it Later
         Role defaultRole = roleRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Default role not found"));
+                .orElseThrow(() -> new CustomException("Default role not found", HttpStatus.NOT_FOUND));
 
         User user = new User();
         user.setUsername(userRequestDto.getUsername());
@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDtoById getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         return mapToUserDtoById(user);
     }
@@ -136,13 +136,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public String createModeratorRequest(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         // Prevent duplicate pending requests
         boolean hasPending = moderatorRequestRepository.findByUser(user).stream()
                 .anyMatch(req -> req.getStatus() == ModeratorRequest.Status.PENDING);
         if (hasPending) {
-            throw new RuntimeException("You already have a pending moderator request.");
+            throw new CustomException("You already have a pending moderator request.", HttpStatus.CONFLICT);
         }
 
         ModeratorRequest request = ModeratorRequest.builder()
@@ -165,13 +165,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public ModeratorRequestDto reviewModeratorRequest(Long requestId, ModeratorUpdateRequestDto moderatorUpdateRequestDto) {
         ModeratorRequest request = moderatorRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new CustomException("Request not found", HttpStatus.NOT_FOUND));
 
-        User admin = userRepository.findById(moderatorUpdateRequestDto.getAdminId())
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        String currentAdminName = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        User admin = userRepository.findByEmail(currentAdminName)
+                .orElseThrow(() -> new CustomException("Admin not found", HttpStatus.NOT_FOUND));
 
         if (request.getStatus() != ModeratorRequest.Status.PENDING)
-            throw new RuntimeException("Request already reviewed.");
+            throw new CustomException("Request already reviewed.", HttpStatus.CONFLICT);
 
         String action = moderatorUpdateRequestDto.getAction();
 
@@ -182,7 +184,7 @@ public class UserServiceImpl implements UserService {
 
             // Update user role to MODERATOR
             Role moderatorRole = roleRepository.findById(2L)
-                    .orElseThrow(() -> new RuntimeException("MODERATOR role not found"));
+                    .orElseThrow(() -> new CustomException("MODERATOR role not found", HttpStatus.NOT_FOUND));
             User user = request.getUser();
             user.setRole(moderatorRole);
             userRepository.save(user);
@@ -191,7 +193,7 @@ public class UserServiceImpl implements UserService {
             request.setReviewedBy(admin);
             request.setReviewedAt(LocalDateTime.now());
         } else {
-            throw new RuntimeException("Invalid action. Use APPROVE or REJECT.");
+            throw new CustomException("Invalid action. Use APPROVE or REJECT.", HttpStatus.NOT_FOUND);
         }
 
         ModeratorRequest updated = moderatorRequestRepository.save(request);
@@ -200,10 +202,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String resignAsModerator(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         Role authorRole = roleRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Author role not found"));
+                .orElseThrow(() -> new CustomException("Author role not found", HttpStatus.NOT_FOUND));
 
         user.setRole(authorRole);
         userRepository.save(user);
@@ -217,12 +219,12 @@ public class UserServiceImpl implements UserService {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User requestedByUser = userRepository.findByEmail(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Requester user not found"));
+                .orElseThrow(() -> new CustomException("Requester user not found", HttpStatus.NOT_FOUND));
 
         // Check if request is by Super-Admin
         String role = String.valueOf(requestedByUser.getRole().getName());
         Role adminRole = roleRepository.findById(3L)
-                .orElseThrow(() -> new RuntimeException("Admin Role not found"));
+                .orElseThrow(() -> new CustomException("Admin Role not found", HttpStatus.NOT_FOUND));
 
         if(role.equals("SUPER_ADMIN")){
             User newAdmin = User.builder()
@@ -263,22 +265,22 @@ public class UserServiceImpl implements UserService {
 
         // Fetch the request
         AdminRequest adminRequest = adminRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Admin request not found"));
+                .orElseThrow(() -> new CustomException("Admin request not found", HttpStatus.NOT_FOUND));
 
         // Ensure the request is still pending
         if (adminRequest.getStatus() != AdminRequest.Status.PENDING) {
-            throw new RuntimeException("Request is already " + adminRequest.getStatus());
+            throw new CustomException("Request is already reviewed", HttpStatus.CONFLICT);
         }
 
         // Get the reviewer (Super Admin) from the SecurityContext
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User reviewer = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Reviewer not found"));
+                .orElseThrow(() -> new CustomException("Reviewer not found", HttpStatus.NOT_FOUND));
 
         // Handle approval or rejection
         String action = adminUpdateRequestDto.getAction().toUpperCase();
         Role adminRole = roleRepository.findById(3L)
-                .orElseThrow(() -> new RuntimeException("ADMIN role not found"));
+                .orElseThrow(() -> new CustomException("ADMIN role not found", HttpStatus.NOT_FOUND));
 
         if ("APPROVED".equalsIgnoreCase(action)) {
             // Create new Admin user
@@ -294,7 +296,7 @@ public class UserServiceImpl implements UserService {
         } else if ("REJECTED".equalsIgnoreCase(action))  {
             adminRequest.setStatus(AdminRequest.Status.REJECTED);
         } else {
-            throw new RuntimeException("Invalid action. Must be 'APPROVE' or 'REJECT'.");
+            throw new CustomException("Invalid action. Must be 'APPROVE' or 'REJECT'.", HttpStatus.NOT_FOUND);
         }
 
         // Update metadata

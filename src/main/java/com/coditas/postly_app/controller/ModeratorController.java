@@ -8,6 +8,7 @@ import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.service.CommentService;
 import com.coditas.postly_app.service.PostService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,7 +42,7 @@ public class ModeratorController {
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponseDto<PostDto>> reviewPost(
             @PathVariable Long postId,
-            @RequestBody ModeratorActionDto action // APPROVE or REJECT
+            @RequestBody @Valid ModeratorActionDto action // APPROVE or REJECT
     ) {
 
         PostDto data = postService.reviewPost(postId, action);
@@ -68,7 +69,7 @@ public class ModeratorController {
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponseDto<CommentDto>> reviewComment(
             @PathVariable Long commentId,
-            @RequestBody ModeratorActionDto action // APPROVE or REJECT
+            @RequestBody @Valid ModeratorActionDto action // APPROVE or REJECT
     ) {
 
         CommentDto data = commentService.reviewComment(commentId, action);

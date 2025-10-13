@@ -4,6 +4,7 @@ import com.coditas.postly_app.dto.ApiResponseDto;
 import com.coditas.postly_app.dto.ModeratorRequestDto;
 import com.coditas.postly_app.dto.ModeratorUpdateRequestDto;
 import com.coditas.postly_app.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +45,7 @@ public class ModeratorRequestController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponseDto<ModeratorRequestDto>> reviewRequest(
             @PathVariable Long requestId,
-            @RequestBody ModeratorUpdateRequestDto moderatorUpdateRequestDto
+            @RequestBody @Valid ModeratorUpdateRequestDto moderatorUpdateRequestDto
             ) {
 
         ModeratorRequestDto data = userService.reviewModeratorRequest(requestId, moderatorUpdateRequestDto);

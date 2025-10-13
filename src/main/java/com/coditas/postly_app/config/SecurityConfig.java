@@ -42,39 +42,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/swagger-ui.html/**", "/v3/api-docs/**").permitAll()
 
-                        // users
-//                        .requestMatchers(HttpMethod.GET, "/api/users").hasAnyRole("ADMIN", "SUPER_ADMIN") // Get all users
-//                        .requestMatchers(HttpMethod.GET, "/api/users/**").authenticated() // Get user by ID
-//                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("MODERATOR")
-
-                        // moderation
-//                        .requestMatchers("/api/moderation/**").hasAnyRole("MODERATOR","ADMIN","SUPER_ADMIN")
-
-                        // posts (accessible to users and moderators/admins)
-//                        .requestMatchers(HttpMethod.GET, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN", "SUPER_ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR")
-//                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasAnyRole("AUTHOR", "MODERATOR")
-//                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasAnyRole("AUTHOR","MODERATOR","ADMIN", "SUPER_ADMIN")
-
-                        // comments (users can CRUD, moderators/admins review)
-//                        .requestMatchers(HttpMethod.GET, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR", "ADMIN", "SUPER_ADMIN")
-//                        .requestMatchers(HttpMethod.POST, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR")
-//                        .requestMatchers(HttpMethod.PUT, "/api/comments/**").hasAnyRole("AUTHOR", "MODERATOR")
-//                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").hasAnyRole("AUTHOR","MODERATOR","ADMIN", "SUPER_ADMIN")
-
-                        // moderator requests
-//                        .requestMatchers(HttpMethod.POST, "/api/moderator-requests/request/**").hasRole("AUTHOR")
-//                        .requestMatchers(HttpMethod.GET, "/api/moderator-requests/**").hasRole("ADMIN")
-//                        .requestMatchers(HttpMethod.PUT, "/api/moderator-requests/**").hasRole("ADMIN")
-
-                        // admin requests
-//                        .requestMatchers(HttpMethod.POST, "/api/admin-requests/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-//                        .requestMatchers(HttpMethod.GET, "/api/admin-requests/**").hasRole("SUPER_ADMIN")
-//                        .requestMatchers(HttpMethod.PUT, "/api/admin-requests/**").hasRole("SUPER_ADMIN")
-
-                        // review logs (only admins/superadmins)
-//                        .requestMatchers("/api/review-logs/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-
                         // any other request must be authenticated
                         .anyRequest().authenticated()
                 )

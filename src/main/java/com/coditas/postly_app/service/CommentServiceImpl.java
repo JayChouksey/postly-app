@@ -2,6 +2,7 @@ package com.coditas.postly_app.service;
 
 import com.coditas.postly_app.dto.CommentDto;
 import com.coditas.postly_app.dto.CommentRequestDto;
+import com.coditas.postly_app.dto.CommentUpdateRequestDto;
 import com.coditas.postly_app.dto.ModeratorActionDto;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
@@ -52,10 +53,6 @@ public class CommentServiceImpl implements CommentService {
             throw new CustomException("Comment can only done on Approved Posts", HttpStatus.FORBIDDEN);
         }
 
-        if(post.getStatus() != Post.Status.APPROVED){
-            throw new CustomException("Comment can only done on Approved Posts", HttpStatus.FORBIDDEN);
-        }
-
         Comment comment = new Comment();
         comment.setContent(requestDto.getContent());
         comment.setAuthor(user);
@@ -79,8 +76,8 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto updateComment(Long commentId, CommentRequestDto requestDto) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
+    public CommentDto updateComment(Long commentId, CommentUpdateRequestDto requestDto) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String authorEmail = auth.getName();
@@ -124,14 +121,14 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
 
         // Save review log
-        saveReviewLog(reviewer, "COMMENT", comment.getId(), action);
+        saveReviewLog(reviewer, comment.getId(), action);
 
         return mapToDto(comment);
     }
 
     @Override
     public void deleteComment(Long commentId) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String authorEmail = auth.getName();
@@ -145,10 +142,10 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // Helper method to save review log entry
-    private void saveReviewLog(User reviewer, String entityType, Long entityId, ModeratorActionDto action) {
+    private void saveReviewLog(User reviewer, Long entityId, ModeratorActionDto action) {
         ReviewLog log = new ReviewLog();
         log.setReviewer(reviewer);
-        log.setEntityType(ReviewLog.EntityType.valueOf(entityType));
+        log.setEntityType(ReviewLog.EntityType.valueOf("COMMENT"));
         log.setEntityId(entityId);
         log.setAction(ReviewLog.Action.valueOf(action.getAction().toUpperCase()));
         log.setReviewedAt(LocalDateTime.now());

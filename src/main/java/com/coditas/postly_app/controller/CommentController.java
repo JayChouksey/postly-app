@@ -3,6 +3,7 @@ package com.coditas.postly_app.controller;
 import com.coditas.postly_app.dto.ApiResponseDto;
 import com.coditas.postly_app.dto.CommentDto;
 import com.coditas.postly_app.dto.CommentRequestDto;
+import com.coditas.postly_app.dto.CommentUpdateRequestDto;
 import com.coditas.postly_app.service.CommentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,11 +42,11 @@ public class CommentController {
         return ResponseEntity.ok(responseBody);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{commentId}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
-    public ResponseEntity<ApiResponseDto<CommentDto>> updateComment(@PathVariable Long id, @RequestBody CommentRequestDto request) {
+    public ResponseEntity<ApiResponseDto<CommentDto>> updateComment(@PathVariable Long commentId, @RequestBody @Valid CommentUpdateRequestDto request) {
 
-        CommentDto data = commentService.updateComment(id, request);
+        CommentDto data = commentService.updateComment(commentId, request);
         ApiResponseDto<CommentDto> responseBody = new ApiResponseDto<>(true, "Comment Updated", data);
 
         return ResponseEntity.ok(responseBody);

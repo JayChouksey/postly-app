@@ -71,6 +71,10 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostDto> getPostsByUser(Long userId) {
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
+
         return postRepository.findByAuthorId(userId)
                 .stream().map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -79,7 +83,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public List<PostDto> getPostsByUserAndStatus(Long userId, String status) {
 
-        User author = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         // Convert the incoming status string (e.g., "approved") into Post.Status enum
