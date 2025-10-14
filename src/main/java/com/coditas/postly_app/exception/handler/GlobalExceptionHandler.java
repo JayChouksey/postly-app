@@ -1,7 +1,6 @@
 package com.coditas.postly_app.exception.handler;
 
 import com.coditas.postly_app.exception.CustomException;
-import com.coditas.postly_app.exception.EmailAlreadyExistsException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,13 +31,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<Map<String, String>> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("email", ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
-    }
-
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<Map<String, Object>> handleCustomException(CustomException ex) {
         Map<String, Object> errorResponse = new LinkedHashMap<>();
@@ -55,7 +47,6 @@ public class GlobalExceptionHandler {
         Map<String, Object> errorResponse = new LinkedHashMap<>();
         errorResponse.put("timestamp", LocalDateTime.now());
         errorResponse.put("status", HttpStatus.FORBIDDEN.value());
-//        errorResponse.put("error", HttpStatus.FORBIDDEN.getReasonPhrase());
         errorResponse.put("error", ex.getMessage());
         errorResponse.put("message", "Access denied: You do not have permission to perform this action");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
@@ -91,5 +82,15 @@ public class GlobalExceptionHandler {
         errorResponse.put("error", HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.put("message", "JWT token has expired: " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String,Object>> handleException(Exception ex){
+        Map<String, Object> errorResponse = new LinkedHashMap<>();
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
+        errorResponse.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        errorResponse.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }

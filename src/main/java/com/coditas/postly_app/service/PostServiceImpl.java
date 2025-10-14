@@ -86,7 +86,7 @@ public class PostServiceImpl implements PostService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
-        // Convert the incoming status string (e.g., "approved") into Post.Status enum
+        // Convert the incoming status string into Post.Status enum
         Post.Status postStatus;
         try {
             postStatus = Post.Status.valueOf(status.toUpperCase());

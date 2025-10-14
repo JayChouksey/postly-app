@@ -5,8 +5,6 @@ import com.coditas.postly_app.dto.*;
 import java.util.List;
 
 public interface UserService {
-    String registerUser(UserRequestDto userRequestDto);
-    LoginDto login(LoginRequestDto loginRequestDto);
     List<UserDto> getAllUsers();
     UserDtoById getUserById(Long id);
     String deleteUser(Long id);

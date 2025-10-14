@@ -7,6 +7,7 @@ public class LoginDto {
     Long id;
     String username;
     String email;
-    String token;
+    String accessToken;
+    String refreshToken;
     String role;
 }

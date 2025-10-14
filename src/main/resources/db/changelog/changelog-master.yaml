@@ -11,7 +11,6 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: true
             stripComments: true
-
   - changeSet:
       id: 002-insert-base-roles
       author: Jay Chouksey
@@ -24,7 +23,6 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: true
             stripComments: true
-
   - changeSet:
       id: 003-insert-super-admin
       author: Jay Chouksey
@@ -34,6 +32,18 @@ databaseChangeLog:
             dbms: mysql
             encoding: utf8
             path: common/003-insert-super-admin.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+  - changeSet:
+      id: 004-create-refresh-tokens-table
+      author: Jay Chouksey
+      comment: create refresh_tokens table
+      changes:
+        - sqlFile:
+            dbms: mysql
+            encoding: utf8
+            path: common/004-create-refresh-tokens-table.sql
             relativeToChangelogFile: true
             splitStatements: true
             stripComments: true
