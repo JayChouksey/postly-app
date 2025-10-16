@@ -42,8 +42,8 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
-    public String registerUser(UserRequestDto userRequestDto) {
-        if (userRepository.existsByEmail(userRequestDto.getEmail())) {
+    public UserCreateResponseDto registerUser(UserCreateRequestDto userCreateRequestDto) {
+        if (userRepository.existsByEmail(userCreateRequestDto.getEmail())) {
             throw new CustomException("Email already exists", HttpStatus.CONFLICT);
         }
 
@@ -52,17 +52,23 @@ public class AuthServiceImpl implements AuthService{
                 .orElseThrow(() -> new CustomException("Default role not found", HttpStatus.NOT_FOUND));
 
         User user = new User();
-        user.setUsername(userRequestDto.getUsername());
-        user.setEmail(userRequestDto.getEmail());
-        user.setPassword(passwordEncoder.encode(userRequestDto.getPassword()));
+        user.setUsername(userCreateRequestDto.getUsername());
+        user.setEmail(userCreateRequestDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userCreateRequestDto.getPassword()));
         user.setRole(defaultRole);
 
-        userRepository.save(user);
-        return "Sign Up Successful";
+        User savedUser = userRepository.save(user);
+
+        return UserCreateResponseDto.builder()
+                .id(savedUser.getId())
+                .username(savedUser.getUsername())
+                .email(savedUser.getEmail())
+                .role(String.valueOf(savedUser.getRole().getName()))
+                .build();
     }
 
     @Override
-    public LoginDto loginUser(LoginRequestDto request) {
+    public LoginResponseDto loginUser(LoginRequestDto request) {
         try {
             Authentication authentication = authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -85,15 +91,15 @@ public class AuthServiceImpl implements AuthService{
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser.getId());
 
             // Build response DTO
-            LoginDto loginDto = new LoginDto();
-            loginDto.setId(savedUser.getId());
-            loginDto.setEmail(savedUser.getEmail());
-            loginDto.setUsername(savedUser.getUsername());
-            loginDto.setRole(String.valueOf(savedUser.getRole().getName()));
-            loginDto.setRefreshToken(refreshToken.getToken());
-            loginDto.setAccessToken(jwtToken);
+            LoginResponseDto loginResponseDto = new LoginResponseDto();
+            loginResponseDto.setId(savedUser.getId());
+            loginResponseDto.setEmail(savedUser.getEmail());
+            loginResponseDto.setUsername(savedUser.getUsername());
+            loginResponseDto.setRole(String.valueOf(savedUser.getRole().getName()));
+            loginResponseDto.setRefreshToken(refreshToken.getToken());
+            loginResponseDto.setAccessToken(jwtToken);
 
-            return loginDto;
+            return loginResponseDto;
 
         } catch (BadCredentialsException ex) {
             throw new CustomException("Invalid email or password", HttpStatus.UNAUTHORIZED);
@@ -123,6 +129,7 @@ public class AuthServiceImpl implements AuthService{
         return refreshTokenDto;
     }
 
+    // TODO: Need to check for it as well
     @Override
     public String logoutUser(RefreshTokenRequestDto refreshTokenRequestDto) {
         String requestToken = refreshTokenRequestDto.getRefreshToken();

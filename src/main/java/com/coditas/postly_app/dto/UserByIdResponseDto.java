@@ -1,9 +1,11 @@
 package com.coditas.postly_app.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class UserDtoById {
+@Builder
+public class UserByIdResponseDto {
     private Long id;
     private String username;
     private String email;

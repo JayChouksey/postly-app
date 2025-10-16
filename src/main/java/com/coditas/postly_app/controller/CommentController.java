@@ -1,8 +1,8 @@
 package com.coditas.postly_app.controller;
 
 import com.coditas.postly_app.dto.ApiResponseDto;
-import com.coditas.postly_app.dto.CommentDto;
-import com.coditas.postly_app.dto.CommentRequestDto;
+import com.coditas.postly_app.dto.CommentResponseDto;
+import com.coditas.postly_app.dto.CommentCreateRequestDto;
 import com.coditas.postly_app.dto.CommentUpdateRequestDto;
 import com.coditas.postly_app.service.CommentService;
 import jakarta.validation.Valid;
@@ -23,31 +23,31 @@ public class CommentController {
 
     @PostMapping
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
-    public ResponseEntity<ApiResponseDto<CommentDto>> addComment(@RequestBody @Valid CommentRequestDto request) {
+    public ResponseEntity<ApiResponseDto<CommentResponseDto>> addComment(@RequestBody @Valid CommentCreateRequestDto request) {
 
-        CommentDto data = commentService.addComment(request);
+        CommentResponseDto data = commentService.addComment(request);
 
-        ApiResponseDto<CommentDto> responseBody = new ApiResponseDto<>(true, "Comment created successfully", data);
+        ApiResponseDto<CommentResponseDto> responseBody = new ApiResponseDto<>(true, "Comment created successfully", data);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
     }
 
     @GetMapping("/post/{postId}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<CommentDto>>> getCommentsByPost(@PathVariable Long postId) {
+    public ResponseEntity<ApiResponseDto<List<CommentResponseDto>>> getCommentsByPost(@PathVariable Long postId) {
 
-        List<CommentDto> data = commentService.getCommentsByPost(postId);
-        ApiResponseDto<List<CommentDto>> responseBody = new ApiResponseDto<>(true, "Comment fetched", data);
+        List<CommentResponseDto> data = commentService.getCommentsByPost(postId);
+        ApiResponseDto<List<CommentResponseDto>> responseBody = new ApiResponseDto<>(true, "Comment fetched", data);
 
         return ResponseEntity.ok(responseBody);
     }
 
     @PutMapping("/{commentId}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR')")
-    public ResponseEntity<ApiResponseDto<CommentDto>> updateComment(@PathVariable Long commentId, @RequestBody @Valid CommentUpdateRequestDto request) {
+    public ResponseEntity<ApiResponseDto<CommentResponseDto>> updateComment(@PathVariable Long commentId, @RequestBody @Valid CommentUpdateRequestDto request) {
 
-        CommentDto data = commentService.updateComment(commentId, request);
-        ApiResponseDto<CommentDto> responseBody = new ApiResponseDto<>(true, "Comment Updated", data);
+        CommentResponseDto data = commentService.updateComment(commentId, request);
+        ApiResponseDto<CommentResponseDto> responseBody = new ApiResponseDto<>(true, "Comment Updated", data);
 
         return ResponseEntity.ok(responseBody);
     }

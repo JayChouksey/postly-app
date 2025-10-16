@@ -1,9 +1,6 @@
 package com.coditas.postly_app.controller;
 
-import com.coditas.postly_app.dto.ApiResponseDto;
-import com.coditas.postly_app.dto.CommentDto;
-import com.coditas.postly_app.dto.ModeratorActionDto;
-import com.coditas.postly_app.dto.PostDto;
+import com.coditas.postly_app.dto.*;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.service.CommentService;
@@ -27,12 +24,12 @@ public class ModeratorController {
     // Get all posts pending review
     @GetMapping("/posts/status/{status}")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<PostDto>>> getPostByStatus(@PathVariable String status) {
+    public ResponseEntity<ApiResponseDto<List<PostResponseDto>>> getPostByStatus(@PathVariable String status) {
         String statusInUpperCase = status.toUpperCase();
 
-        List<PostDto> data = postService.getPostsByStatus(Post.Status.valueOf(statusInUpperCase));
+        List<PostResponseDto> data = postService.getPostsByStatus(Post.Status.valueOf(statusInUpperCase));
 
-        ApiResponseDto<List<PostDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched successfully", data);
+        ApiResponseDto<List<PostResponseDto>> responseBody = new ApiResponseDto<>(true, "Posts fetched successfully", data);
 
         return ResponseEntity.ok(responseBody);
     }
@@ -40,13 +37,13 @@ public class ModeratorController {
     // Approve or reject a post
     @PutMapping("/posts/{postId}")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<PostDto>> reviewPost(
+    public ResponseEntity<ApiResponseDto<PostResponseDto>> reviewPost(
             @PathVariable Long postId,
-            @RequestBody @Valid ModeratorActionDto action // APPROVE or REJECT
+            @RequestBody @Valid ActionRequestDto action // APPROVE or REJECT
     ) {
 
-        PostDto data = postService.reviewPost(postId, action);
-        ApiResponseDto<PostDto> responseBody = new ApiResponseDto<>(true, "Status updated", data);
+        PostResponseDto data = postService.reviewPost(postId, action);
+        ApiResponseDto<PostResponseDto> responseBody = new ApiResponseDto<>(true, "Status updated", data);
 
         return ResponseEntity.ok(responseBody);
     }
@@ -54,12 +51,12 @@ public class ModeratorController {
     // Get all comments pending review
     @GetMapping("/comments/status/{status}")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<CommentDto>>> getCommentsByStatus(@PathVariable String status) {
+    public ResponseEntity<ApiResponseDto<List<CommentResponseDto>>> getCommentsByStatus(@PathVariable String status) {
         String statusInUpperCase = status.toUpperCase();
 
-        List<CommentDto> data = commentService.getCommentsByStatus(Comment.Status.valueOf(statusInUpperCase));
+        List<CommentResponseDto> data = commentService.getCommentsByStatus(Comment.Status.valueOf(statusInUpperCase));
 
-        ApiResponseDto<List<CommentDto>> responseBody = new ApiResponseDto<>(true, "Comments fetched",data);
+        ApiResponseDto<List<CommentResponseDto>> responseBody = new ApiResponseDto<>(true, "Comments fetched",data);
 
         return ResponseEntity.ok(responseBody);
     }
@@ -67,14 +64,14 @@ public class ModeratorController {
     // Approve or reject a comment
     @PutMapping("/comments/{commentId}")
     @PreAuthorize("hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<CommentDto>> reviewComment(
+    public ResponseEntity<ApiResponseDto<CommentResponseDto>> reviewComment(
             @PathVariable Long commentId,
-            @RequestBody @Valid ModeratorActionDto action // APPROVE or REJECT
+            @RequestBody @Valid ActionRequestDto action // APPROVE or REJECT
     ) {
 
-        CommentDto data = commentService.reviewComment(commentId, action);
+        CommentResponseDto data = commentService.reviewComment(commentId, action);
 
-        ApiResponseDto<CommentDto> responseBody = new ApiResponseDto<>(true, "Comment status updated", data);
+        ApiResponseDto<CommentResponseDto> responseBody = new ApiResponseDto<>(true, "Comment status updated", data);
 
         return ResponseEntity.ok(responseBody);
     }

@@ -1,8 +1,8 @@
 package com.coditas.postly_app.controller;
 
 import com.coditas.postly_app.dto.ApiResponseDto;
-import com.coditas.postly_app.dto.UserDto;
-import com.coditas.postly_app.dto.UserDtoById;
+import com.coditas.postly_app.dto.UserCreateResponseDto;
+import com.coditas.postly_app.dto.UserByIdResponseDto;
 import com.coditas.postly_app.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +20,9 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<UserDto>>> getAllUsers() {
-        List<UserDto> data = userService.getAllUsers();
-        ApiResponseDto<List<UserDto>> responseBody = new ApiResponseDto<>(true, "Users fetched successfully", data);
+    public ResponseEntity<ApiResponseDto<List<UserCreateResponseDto>>> getAllUsers() {
+        List<UserCreateResponseDto> data = userService.getAllUsers();
+        ApiResponseDto<List<UserCreateResponseDto>> responseBody = new ApiResponseDto<>(true, "Users fetched successfully", data);
 
         return ResponseEntity.ok(responseBody);
     }
@@ -30,9 +30,9 @@ public class UserController {
     // Get user by ID
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('AUTHOR') or hasRole('MODERATOR') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<UserDtoById>> getUserById(@PathVariable Long id) {
-        UserDtoById data = userService.getUserById(id);
-        ApiResponseDto<UserDtoById> responseBody = new ApiResponseDto<>(true, "User fetched successfully", data);
+    public ResponseEntity<ApiResponseDto<UserByIdResponseDto>> getUserById(@PathVariable Long id) {
+        UserByIdResponseDto data = userService.getUserById(id);
+        ApiResponseDto<UserByIdResponseDto> responseBody = new ApiResponseDto<>(true, "User fetched successfully", data);
 
         return ResponseEntity.ok(responseBody);
     }

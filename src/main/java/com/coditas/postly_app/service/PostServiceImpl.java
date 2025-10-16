@@ -1,9 +1,6 @@
 package com.coditas.postly_app.service;
 
-import com.coditas.postly_app.dto.CommentDto;
-import com.coditas.postly_app.dto.ModeratorActionDto;
-import com.coditas.postly_app.dto.PostDto;
-import com.coditas.postly_app.dto.PostRequestDto;
+import com.coditas.postly_app.dto.*;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.entity.ReviewLog;
@@ -37,32 +34,32 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public String createPost(PostRequestDto postRequestDto) {
+    public PostResponseDto createPost(PostCreateRequestDto postCreateRequestDto) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User author = userRepository.findByEmail(currentUsername)
                 .orElseThrow(() -> new CustomException("Requester user not found", HttpStatus.NOT_FOUND));
 
         Post post = new Post();
-        post.setTitle(postRequestDto.getTitle());
-        post.setContent(postRequestDto.getContent());
+        post.setTitle(postCreateRequestDto.getTitle());
+        post.setContent(postCreateRequestDto.getContent());
         post.setAuthor(author);
         post.setStatus(Post.Status.PENDING);
 
-        postRepository.save(post);
+        Post savedPost = postRepository.save(post);
 
-        return "Post create successfully!";
+        return mapPostToDto(savedPost);
     }
 
     @Override
-    public List<PostDto> getAllApprovedPosts() {
+    public List<PostWithCommentResponseDto> getAllApprovedPosts() {
         return postRepository.findByStatus(Post.Status.APPROVED)
-                .stream().map(this::mapToDto)
+                .stream().map(this::mapPostWithCommentsToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<PostDto> getPostsByStatus(Post.Status status) {
+    public List<PostResponseDto> getPostsByStatus(Post.Status status) {
         return postRepository.findByStatus(status)
                 .stream()
                 .map(this::mapPostToDto)
@@ -70,18 +67,18 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDto> getPostsByUser(Long userId) {
+    public List<PostResponseDto> getPostsByUser(Long userId) {
 
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
         return postRepository.findByAuthorId(userId)
-                .stream().map(this::mapToDto)
+                .stream().map(this::mapPostToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<PostDto> getPostsByUserAndStatus(Long userId, String status) {
+    public List<PostResponseDto> getPostsByUserAndStatus(Long userId, String status) {
 
         userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
@@ -95,20 +92,20 @@ public class PostServiceImpl implements PostService {
         }
 
         return postRepository.findByAuthorIdAndStatus(userId, postStatus)
-                .stream().map(this::mapToDto)
+                .stream().map(this::mapPostToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public PostDto getPostById(Long postId) {
+    public PostResponseDto getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException("Post not found", HttpStatus.NOT_FOUND));
 
-        return mapToDto(post);
+        return mapPostToDto(post);
     }
 
     @Override
-    public PostDto updatePost(Long postId, PostRequestDto postRequestDto) {
+    public PostResponseDto updatePost(Long postId, PostCreateRequestDto postCreateRequestDto) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException("Post not found", HttpStatus.NOT_FOUND));
 
@@ -117,19 +114,19 @@ public class PostServiceImpl implements PostService {
         User author = userRepository.findByEmail(currentUsername)
                 .orElseThrow(() -> new CustomException("Requester user not found", HttpStatus.NOT_FOUND));
 
-        post.setTitle(postRequestDto.getTitle());
-        post.setContent(postRequestDto.getContent());
+        post.setTitle(postCreateRequestDto.getTitle());
+        post.setContent(postCreateRequestDto.getContent());
         post.setStatus(Post.Status.PENDING);
 
         if (!post.getAuthor().getId().equals(author.getId())) {
             throw new CustomException("You cannot update someone else’s post", HttpStatus.FORBIDDEN);
         }
 
-        return mapToDto(postRepository.save(post));
+        return mapPostToDto(postRepository.save(post));
     }
 
     @Override
-    public PostDto reviewPost(Long postId, ModeratorActionDto action) {
+    public PostResponseDto reviewPost(Long postId, ActionRequestDto action) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException("Post not found", HttpStatus.NOT_FOUND));
 
@@ -180,7 +177,7 @@ public class PostServiceImpl implements PostService {
     }
 
     // Helper method to save review log entry
-    private void saveReviewLog(User reviewer, Long entityId, ModeratorActionDto action) {
+    private void saveReviewLog(User reviewer, Long entityId, ActionRequestDto action) {
         ReviewLog log = new ReviewLog();
         log.setReviewer(reviewer);
         log.setEntityType(ReviewLog.EntityType.valueOf("POST"));
@@ -191,20 +188,12 @@ public class PostServiceImpl implements PostService {
         reviewLogRepository.save(log);
     }
 
-    private PostDto mapToDto(Post post) {
-        PostDto dto = new PostDto();
-        dto.setId(post.getId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setStatus(String.valueOf(post.getStatus()));
-        dto.setAuthorName(post.getAuthor().getUsername());
-        dto.setCreatedAt(post.getCreatedAt());
-
+    private PostWithCommentResponseDto mapPostWithCommentsToDto(Post post) {
         // Map approved comments
-        List<CommentDto> approvedComments = post.getComments().stream()
+        List<CommentResponseDto> approvedComments = post.getComments().stream()
                 .filter(c -> c.getStatus() == Comment.Status.APPROVED) // only approved
                 .map(c -> {
-                    CommentDto cdto = new CommentDto();
+                    CommentResponseDto cdto = new CommentResponseDto();
                     cdto.setId(c.getId());
                     cdto.setContent(c.getContent());
                     cdto.setStatus(String.valueOf(c.getStatus()));
@@ -215,19 +204,25 @@ public class PostServiceImpl implements PostService {
                 })
                 .toList();
 
-        dto.setApprovedComments(approvedComments);
-
-        return dto;
+        return PostWithCommentResponseDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .status(String.valueOf(post.getStatus()))
+                .authorName(post.getAuthor().getUsername())
+                .createdAt(post.getCreatedAt())
+                .approvedComments(approvedComments)
+                .build();
     }
 
-    private PostDto mapPostToDto(Post post) {
-        PostDto dto = new PostDto();
-        dto.setId(post.getId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setStatus(post.getStatus().name());
-        dto.setAuthorName(post.getAuthor().getUsername());
-        dto.setCreatedAt(post.getCreatedAt());
-        return dto;
+    private PostResponseDto mapPostToDto(Post post) {
+        return PostResponseDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .status(post.getStatus().name())
+                .authorName(post.getAuthor().getUsername())
+                .createdAt(post.getCreatedAt())
+                .build();
     }
 }

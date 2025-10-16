@@ -36,12 +36,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
+    public List<UserCreateResponseDto> getAllUsers() {
         return userRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
-    public UserDtoById getUserById(Long id) {
+    public UserByIdResponseDto getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String createModeratorRequest(Long userId) {
+    public UserCreateRequestResponseDto createModeratorRequest(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
@@ -74,12 +74,13 @@ public class UserServiceImpl implements UserService {
                 .status(ModeratorRequest.Status.PENDING)
                 .build();
 
-        moderatorRequestRepository.save(request);
-        return "Request sent successfully!";
+        ModeratorRequest savedModeratorRequest = moderatorRequestRepository.save(request);
+
+        return mapToDto(savedModeratorRequest, user);
     }
 
     @Override
-    public List<ModeratorRequestDto> getAllModeratorPendingRequests() {
+    public List<UserRequestResponseDto> getAllModeratorPendingRequests() {
         return moderatorRequestRepository.findAllByStatus(ModeratorRequest.Status.PENDING)
                 .stream()
                 .map(this::mapToDto)
@@ -87,7 +88,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ModeratorRequestDto reviewModeratorRequest(Long requestId, ModeratorUpdateRequestDto moderatorUpdateRequestDto) {
+    public UserRequestUpdateResponseDto reviewModeratorRequest(Long requestId, ActionRequestDto actionRequestDto) {
         ModeratorRequest request = moderatorRequestRepository.findById(requestId)
                 .orElseThrow(() -> new CustomException("Request not found", HttpStatus.NOT_FOUND));
 
@@ -99,7 +100,7 @@ public class UserServiceImpl implements UserService {
         if (request.getStatus() != ModeratorRequest.Status.PENDING)
             throw new CustomException("Request already reviewed.", HttpStatus.CONFLICT);
 
-        String action = moderatorUpdateRequestDto.getAction();
+        String action = actionRequestDto.getAction();
 
         if (action.equalsIgnoreCase("APPROVED")) {
             request.setStatus(ModeratorRequest.Status.APPROVED);
@@ -121,7 +122,7 @@ public class UserServiceImpl implements UserService {
         }
 
         ModeratorRequest updated = moderatorRequestRepository.save(request);
-        return mapToDto(updated);
+        return mapToDtoOnUpdate(updated);
     }
 
     @Override
@@ -138,7 +139,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String createAdminRequest(UserRequestDto userRequestDto) {
+    public ApiResponseDto<?> createAdminRequest(UserCreateRequestDto userCreateRequestDto) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -152,32 +153,36 @@ public class UserServiceImpl implements UserService {
 
         if(role.equals("SUPER_ADMIN")){
             User newAdmin = User.builder()
-                    .username(userRequestDto.getUsername())
-                    .email(userRequestDto.getEmail())
-                    .password(passwordEncoder.encode(userRequestDto.getPassword()))
+                    .username(userCreateRequestDto.getUsername())
+                    .email(userCreateRequestDto.getEmail())
+                    .password(passwordEncoder.encode(userCreateRequestDto.getPassword()))
                     .role(adminRole)
                     .build();
 
             // then save the admin directly
-            userRepository.save(newAdmin);
+            User savedAdmin = userRepository.save(newAdmin);
 
-            return "Admin Created Successfully";
+            UserCreateResponseDto userCreateResponseDto = mapToDto(savedAdmin);
+
+            return new ApiResponseDto<>(true, "Admin Created Successfully", userCreateResponseDto);
         }
 
         AdminRequest adminRequest = AdminRequest.builder()
-                .username(userRequestDto.getUsername())
-                .email(userRequestDto.getEmail())
-                .tempPassword(passwordEncoder.encode(userRequestDto.getPassword()))
+                .username(userCreateRequestDto.getUsername())
+                .email(userCreateRequestDto.getEmail())
+                .tempPassword(passwordEncoder.encode(userCreateRequestDto.getPassword()))
                 .requestedBy(requestedByUser)
                 .build();
 
         adminRequestRepository.save(adminRequest);
 
-        return "Admin request sent successfully";
+        UserCreateRequestResponseDto userCreateRequestResponseDto = mapToDto(adminRequest, requestedByUser);
+
+        return new ApiResponseDto<>(true, "Admin request sent successfully", userCreateRequestResponseDto);
     }
 
     @Override
-    public List<AdminRequestDto> getAllAdminPendingRequests() {
+    public List<UserRequestResponseDto> getAllAdminPendingRequests() {
         return adminRequestRepository.findAllByStatus(AdminRequest.Status.PENDING)
                 .stream()
                 .map(this::mapToDto)
@@ -185,7 +190,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public AdminRequestDto reviewAdminRequest(Long requestId, AdminUpdateRequestDto adminUpdateRequestDto) {
+    public UserRequestUpdateResponseDto reviewAdminRequest(Long requestId, ActionRequestDto actionRequestDto) {
 
         // Fetch the request
         AdminRequest adminRequest = adminRequestRepository.findById(requestId)
@@ -202,7 +207,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new CustomException("Reviewer not found", HttpStatus.NOT_FOUND));
 
         // Handle approval or rejection
-        String action = adminUpdateRequestDto.getAction().toUpperCase();
+        String action = actionRequestDto.getAction().toUpperCase();
         Role adminRole = roleRepository.findById(3L)
                 .orElseThrow(() -> new CustomException("ADMIN role not found", HttpStatus.NOT_FOUND));
 
@@ -231,52 +236,89 @@ public class UserServiceImpl implements UserService {
         AdminRequest savedRequest = adminRequestRepository.save(adminRequest);
 
         // Map to DTO and return
-        return mapToDto(savedRequest);
+        return mapToDtoOnUpdate(savedRequest);
     }
 
-    private UserDto mapToDto(User user) {
-        UserDto dto = new UserDto();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setRole(String.valueOf(user.getRole().getName()));
-        return dto;
+    private UserCreateResponseDto mapToDto(User user) {
+        return UserCreateResponseDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(String.valueOf(user.getRole().getName()))
+                .build();
     }
 
-    private UserDtoById mapToUserDtoById(User user) {
-        UserDtoById dto = new UserDtoById();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
-        dto.setRole(String.valueOf(user.getRole().getName()));
-
+    private UserByIdResponseDto mapToUserDtoById(User user) {
 
         boolean hasRequested = moderatorRequestRepository.existsByUserIdAndStatus(
                 user.getId(), ModeratorRequest.Status.PENDING
         );
 
-        dto.setHasRequestedModerator(hasRequested);
-        return dto;
+        return UserByIdResponseDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(String.valueOf(user.getRole().getName()))
+                .hasRequestedModerator(hasRequested)
+                .build();
     }
 
-    private ModeratorRequestDto mapToDto(ModeratorRequest request) {
-        ModeratorRequestDto dto = new ModeratorRequestDto();
-        dto.setId(request.getId());
-        dto.setStatus(request.getStatus().name());
-        dto.setUsername(request.getUser().getUsername());
-        dto.setRequestedAt(request.getRequestedAt());
-        dto.setReviewedBy(request.getReviewedBy() != null ? request.getReviewedBy().getUsername() : null);
-        return dto;
+    private UserRequestResponseDto mapToDto(ModeratorRequest request) {
+        return UserRequestResponseDto.builder()
+                .id(request.getId())
+                .status(request.getStatus().name())
+                .username(request.getUser().getUsername())
+                .requestedAt(request.getRequestedAt())
+                .build();
     }
 
-    private AdminRequestDto mapToDto(AdminRequest request) {
-        AdminRequestDto dto = new AdminRequestDto();
-        dto.setId(request.getId());
-        dto.setStatus(request.getStatus().name());
-        dto.setUsername(request.getUsername());
-        dto.setRequestedAt(request.getRequestedAt());
-        dto.setReviewedBy(request.getReviewedBy() != null ? request.getReviewedBy().getUsername() : null);
-        return dto;
+    private UserRequestUpdateResponseDto mapToDtoOnUpdate(ModeratorRequest request){
+            return UserRequestUpdateResponseDto.builder()
+                    .id(request.getId())
+                    .status(request.getStatus().name())
+                    .username(request.getUser().getUsername())
+                    .requestedAt(request.getRequestedAt())
+                    .reviewedBy(request.getReviewedBy().getUsername())
+                    .build();
+    }
+
+    private UserCreateRequestResponseDto mapToDto(ModeratorRequest moderatorRequest, User user){
+        return UserCreateRequestResponseDto.builder()
+                .requestId(moderatorRequest.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .requestedRole("Moderator")
+                .status(String.valueOf(moderatorRequest.getStatus()))
+                .build();
+    }
+
+    private UserRequestResponseDto mapToDto(AdminRequest request) {
+        return UserRequestResponseDto.builder()
+                .id(request.getId())
+                .status(request.getStatus().name())
+                .username(request.getUsername())
+                .requestedAt(request.getRequestedAt())
+                .build();
+    }
+
+    private UserRequestUpdateResponseDto mapToDtoOnUpdate(AdminRequest request){
+        return UserRequestUpdateResponseDto.builder()
+                .id(request.getId())
+                .status(request.getStatus().name())
+                .username(request.getUsername())
+                .requestedAt(request.getRequestedAt())
+                .reviewedBy(request.getReviewedBy().getUsername())
+                .build();
+    }
+
+    private UserCreateRequestResponseDto mapToDto(AdminRequest adminRequest, User user){
+        return UserCreateRequestResponseDto.builder()
+                .requestId(adminRequest.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .requestedRole("Admin")
+                .status(String.valueOf(adminRequest.getStatus()))
+                .build();
     }
 }
 

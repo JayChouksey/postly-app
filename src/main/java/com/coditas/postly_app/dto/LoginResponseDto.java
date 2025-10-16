@@ -3,7 +3,7 @@ package com.coditas.postly_app.dto;
 import lombok.Data;
 
 @Data
-public class LoginDto {
+public class LoginResponseDto {
     Long id;
     String username;
     String email;

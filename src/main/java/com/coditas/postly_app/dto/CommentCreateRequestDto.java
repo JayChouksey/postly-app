@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class CommentRequestDto {
+public class CommentCreateRequestDto {
 
     @NotNull(message = "Post ID is required")
     private Long postId;

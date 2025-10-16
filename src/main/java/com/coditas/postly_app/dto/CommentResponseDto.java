@@ -3,16 +3,13 @@ package com.coditas.postly_app.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-public class PostDto {
+public class CommentResponseDto {
     private Long id;
-    private String title;
     private String content;
     private String status;
     private String authorName;
+    private Long postId;
     private LocalDateTime createdAt;
-    private List<CommentDto> approvedComments;
 }
-

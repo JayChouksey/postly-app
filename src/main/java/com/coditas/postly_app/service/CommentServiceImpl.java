@@ -1,9 +1,9 @@
 package com.coditas.postly_app.service;
 
-import com.coditas.postly_app.dto.CommentDto;
-import com.coditas.postly_app.dto.CommentRequestDto;
+import com.coditas.postly_app.dto.CommentResponseDto;
+import com.coditas.postly_app.dto.CommentCreateRequestDto;
 import com.coditas.postly_app.dto.CommentUpdateRequestDto;
-import com.coditas.postly_app.dto.ModeratorActionDto;
+import com.coditas.postly_app.dto.ActionRequestDto;
 import com.coditas.postly_app.entity.Comment;
 import com.coditas.postly_app.entity.Post;
 import com.coditas.postly_app.entity.ReviewLog;
@@ -40,7 +40,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto addComment(CommentRequestDto requestDto) {
+    public CommentResponseDto addComment(CommentCreateRequestDto requestDto) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -63,12 +63,12 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentDto> getCommentsByPost(Long postId) {
+    public List<CommentResponseDto> getCommentsByPost(Long postId) {
         return commentRepository.findByPostId(postId).stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     @Override
-    public List<CommentDto> getCommentsByStatus(Comment.Status status) {
+    public List<CommentResponseDto> getCommentsByStatus(Comment.Status status) {
         return commentRepository.findByStatus(status)
                 .stream()
                 .map(this::mapToDto)
@@ -76,7 +76,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto updateComment(Long commentId, CommentUpdateRequestDto requestDto) {
+    public CommentResponseDto updateComment(Long commentId, CommentUpdateRequestDto requestDto) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -94,7 +94,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto reviewComment(Long commentId, ModeratorActionDto action) {
+    public CommentResponseDto reviewComment(Long commentId, ActionRequestDto action) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 
@@ -142,7 +142,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     // Helper method to save review log entry
-    private void saveReviewLog(User reviewer, Long entityId, ModeratorActionDto action) {
+    private void saveReviewLog(User reviewer, Long entityId, ActionRequestDto action) {
         ReviewLog log = new ReviewLog();
         log.setReviewer(reviewer);
         log.setEntityType(ReviewLog.EntityType.valueOf("COMMENT"));
@@ -153,8 +153,8 @@ public class CommentServiceImpl implements CommentService {
         reviewLogRepository.save(log);
     }
 
-    private CommentDto mapToDto(Comment comment) {
-        CommentDto dto = new CommentDto();
+    private CommentResponseDto mapToDto(Comment comment) {
+        CommentResponseDto dto = new CommentResponseDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
         dto.setStatus(String.valueOf(comment.getStatus()));

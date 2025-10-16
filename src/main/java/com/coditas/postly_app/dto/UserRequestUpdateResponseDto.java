@@ -1,14 +1,17 @@
 package com.coditas.postly_app.dto;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class AdminRequestDto {
+@Builder
+public class UserRequestUpdateResponseDto {
     private Long id;
     private String status;
     private String username;
     private LocalDateTime requestedAt;
     private String reviewedBy;
 }
+

@@ -20,34 +20,33 @@ public class AdminRequestController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<String>> createAdmin(@RequestBody @Valid UserRequestDto userRequestDto) {
+    public ResponseEntity<ApiResponseDto<?>> createAdmin(@RequestBody @Valid UserCreateRequestDto userCreateRequestDto) {
 
-        String data = userService.createAdminRequest(userRequestDto);
-        ApiResponseDto<String> responseBody = new ApiResponseDto<>(true, "Admin request sent successfully", data);
+        ApiResponseDto<?> responseBody = userService.createAdminRequest(userCreateRequestDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(responseBody);
     }
 
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponseDto<List<AdminRequestDto>>> getAllPendingRequests() {
+    public ResponseEntity<ApiResponseDto<List<UserRequestResponseDto>>> getAllPendingRequests() {
 
-        List<AdminRequestDto> data = userService.getAllAdminPendingRequests();
+        List<UserRequestResponseDto> data = userService.getAllAdminPendingRequests();
 
-        ApiResponseDto<List<AdminRequestDto>> responseBody = new ApiResponseDto<>(true, "Requests fetched successfully", data);
+        ApiResponseDto<List<UserRequestResponseDto>> responseBody = new ApiResponseDto<>(true, "Requests fetched successfully", data);
 
         return ResponseEntity.ok(responseBody);
     }
 
     @PutMapping("/{requestId}/review")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<AdminRequestDto>> reviewRequest(
+    public ResponseEntity<ApiResponseDto<UserRequestUpdateResponseDto>> reviewRequest(
             @PathVariable Long requestId,
-            @RequestBody @Valid AdminUpdateRequestDto adminUpdateRequestDto
+            @RequestBody @Valid ActionRequestDto actionRequestDto
     ) {
 
-        AdminRequestDto data = userService.reviewAdminRequest(requestId, adminUpdateRequestDto);
-        ApiResponseDto<AdminRequestDto> responseBody = new ApiResponseDto<>(true, "Request reviewed", data);
+        UserRequestUpdateResponseDto data = userService.reviewAdminRequest(requestId, actionRequestDto);
+        ApiResponseDto<UserRequestUpdateResponseDto> responseBody = new ApiResponseDto<>(true, "Request reviewed", data);
 
         return ResponseEntity.status(HttpStatus.OK).body(responseBody);
     }

@@ -1,8 +1,6 @@
 package com.coditas.postly_app.controller;
 
-import com.coditas.postly_app.dto.ApiResponseDto;
-import com.coditas.postly_app.dto.ModeratorRequestDto;
-import com.coditas.postly_app.dto.ModeratorUpdateRequestDto;
+import com.coditas.postly_app.dto.*;
 import com.coditas.postly_app.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,36 +19,36 @@ public class ModeratorRequestController {
 
     @PostMapping("/request/{userId}")
     @PreAuthorize("hasRole('AUTHOR')")
-    public ResponseEntity<ApiResponseDto<String>> createRequest(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponseDto<UserCreateRequestResponseDto>> createRequest(@PathVariable Long userId) {
 
-        String data = userService.createModeratorRequest(userId);
+        UserCreateRequestResponseDto data = userService.createModeratorRequest(userId);
 
-        ApiResponseDto<String> responseBody = new ApiResponseDto<>(true, "Request sent to Admin", data);
+        ApiResponseDto<UserCreateRequestResponseDto> responseBody = new ApiResponseDto<>(true, "Request sent to Admin", data);
 
         return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<List<ModeratorRequestDto>>> getAllPendingRequests() {
+    public ResponseEntity<ApiResponseDto<List<UserRequestResponseDto>>> getAllPendingRequests() {
 
-        List<ModeratorRequestDto> data = userService.getAllModeratorPendingRequests();
+        List<UserRequestResponseDto> data = userService.getAllModeratorPendingRequests();
 
-        ApiResponseDto<List<ModeratorRequestDto>> responseBody = new ApiResponseDto<>(true, "Request fetched successfully", data);
+        ApiResponseDto<List<UserRequestResponseDto>> responseBody = new ApiResponseDto<>(true, "Request fetched successfully", data);
 
         return ResponseEntity.ok(responseBody);
     }
 
     @PutMapping("/{requestId}/review")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<ApiResponseDto<ModeratorRequestDto>> reviewRequest(
+    public ResponseEntity<ApiResponseDto<UserRequestUpdateResponseDto>> reviewRequest(
             @PathVariable Long requestId,
-            @RequestBody @Valid ModeratorUpdateRequestDto moderatorUpdateRequestDto
+            @RequestBody @Valid ActionRequestDto actionRequestDto
             ) {
 
-        ModeratorRequestDto data = userService.reviewModeratorRequest(requestId, moderatorUpdateRequestDto);
+        UserRequestUpdateResponseDto data = userService.reviewModeratorRequest(requestId, actionRequestDto);
 
-        ApiResponseDto<ModeratorRequestDto> responseBody = new ApiResponseDto<>(true, "Request status updated", data);
+        ApiResponseDto<UserRequestUpdateResponseDto> responseBody = new ApiResponseDto<>(true, "Request status updated", data);
 
         return ResponseEntity.ok(responseBody);
     }
