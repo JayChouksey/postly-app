@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
             request.setReviewedAt(LocalDateTime.now());
 
             // Update user role to MODERATOR
-            Role moderatorRole = roleRepository.findById(2L)
+            Role moderatorRole = roleRepository.findByName(Role.RoleName.MODERATOR)
                     .orElseThrow(() -> new CustomException("MODERATOR role not found", HttpStatus.NOT_FOUND));
             User user = request.getUser();
             user.setRole(moderatorRole);
@@ -129,7 +129,7 @@ public class UserServiceImpl implements UserService {
     public String resignAsModerator(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
-        Role authorRole = roleRepository.findById(1L)
+        Role authorRole = roleRepository.findByName(Role.RoleName.AUTHOR)
                 .orElseThrow(() -> new CustomException("Author role not found", HttpStatus.NOT_FOUND));
 
         user.setRole(authorRole);
@@ -148,13 +148,13 @@ public class UserServiceImpl implements UserService {
 
         // Check if request is by Super-Admin
         String role = String.valueOf(requestedByUser.getRole().getName());
-        Role adminRole = roleRepository.findById(3L)
+        Role adminRole = roleRepository.findByName(Role.RoleName.ADMIN)
                 .orElseThrow(() -> new CustomException("Admin Role not found", HttpStatus.NOT_FOUND));
 
         if(role.equals("SUPER_ADMIN")){
             User newAdmin = User.builder()
                     .username(userCreateRequestDto.getUsername())
-                    .email(userCreateRequestDto.getEmail())
+                    .email(userCreateRequestDto.getEmail().toLowerCase())
                     .password(passwordEncoder.encode(userCreateRequestDto.getPassword()))
                     .role(adminRole)
                     .build();
@@ -208,7 +208,7 @@ public class UserServiceImpl implements UserService {
 
         // Handle approval or rejection
         String action = actionRequestDto.getAction().toUpperCase();
-        Role adminRole = roleRepository.findById(3L)
+        Role adminRole = roleRepository.findByName(Role.RoleName.ADMIN)
                 .orElseThrow(() -> new CustomException("ADMIN role not found", HttpStatus.NOT_FOUND));
 
         if ("APPROVED".equalsIgnoreCase(action)) {

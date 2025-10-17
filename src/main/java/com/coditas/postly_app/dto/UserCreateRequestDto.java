@@ -11,10 +11,14 @@ public class UserCreateRequestDto {
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 30, message = "Username must be between 3 and 30 characters")
+    @Pattern(
+            regexp = "^[A-Z][a-z]+(?: [A-Z][a-z]+)*$",
+            message = "Username must start with a capital letter, each word must begin with an uppercase letter followed by lowercase letters, and words should be separated by a single space."
+    )
     private String username;
 
     @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "Invalid email address")
     private String email;
 
     @NotBlank(message = "Password is required")

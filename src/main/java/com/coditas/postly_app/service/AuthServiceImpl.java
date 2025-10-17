@@ -18,6 +18,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+
 
 @Service
 public class AuthServiceImpl implements AuthService{
@@ -47,13 +49,12 @@ public class AuthServiceImpl implements AuthService{
             throw new CustomException("Email already exists", HttpStatus.CONFLICT);
         }
 
-        // TODO: Its a Jugaad, Fix it Later
-        Role defaultRole = roleRepository.findById(1L)
+        Role defaultRole = roleRepository.findByName(Role.RoleName.AUTHOR)
                 .orElseThrow(() -> new CustomException("Default role not found", HttpStatus.NOT_FOUND));
 
         User user = new User();
         user.setUsername(userCreateRequestDto.getUsername());
-        user.setEmail(userCreateRequestDto.getEmail());
+        user.setEmail(userCreateRequestDto.getEmail().toLowerCase());
         user.setPassword(passwordEncoder.encode(userCreateRequestDto.getPassword()));
         user.setRole(defaultRole);
 
@@ -88,7 +89,12 @@ public class AuthServiceImpl implements AuthService{
 
             // Generate JWT
             String jwtToken = jwtService.generateToken(request.getEmail());
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(savedUser.getId());
+            RefreshToken refreshToken;
+            try{
+                refreshToken = refreshTokenService.createRefreshToken(savedUser.getId());
+            }catch (Exception e){
+                throw new CustomException("You are already logged in. Kindly logout first.", HttpStatus.CONFLICT);
+            }
 
             // Build response DTO
             LoginResponseDto loginResponseDto = new LoginResponseDto();
