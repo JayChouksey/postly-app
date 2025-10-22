@@ -9,6 +9,7 @@ import com.coditas.postly_app.repository.RefreshTokenRepository;
 import com.coditas.postly_app.repository.RoleRepository;
 import com.coditas.postly_app.repository.UserRepository;
 import com.coditas.postly_app.util.JwtService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,9 +18,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.sql.SQLException;
-
 
 @Service
 public class AuthServiceImpl implements AuthService{
@@ -44,6 +42,7 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
+    @Transactional
     public UserCreateResponseDto registerUser(UserCreateRequestDto userCreateRequestDto) {
         if (userRepository.existsByEmail(userCreateRequestDto.getEmail())) {
             throw new CustomException("Email already exists", HttpStatus.CONFLICT);
@@ -69,6 +68,7 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Override
+    @Transactional
     public LoginResponseDto loginUser(LoginRequestDto request) {
         try {
             Authentication authentication = authManager.authenticate(

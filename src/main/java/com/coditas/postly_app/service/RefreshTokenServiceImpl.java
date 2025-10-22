@@ -5,6 +5,7 @@ import com.coditas.postly_app.entity.User;
 import com.coditas.postly_app.exception.CustomException;
 import com.coditas.postly_app.repository.RefreshTokenRepository;
 import com.coditas.postly_app.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService{
         this.userRepository = userRepo;
     }
 
+    @Override
+    @Transactional
     public RefreshToken createRefreshToken(Long userId) {
         var token = new RefreshToken();
         User user = userRepository.findById(userId).
@@ -36,6 +39,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService{
         return refreshTokenRepository.save(token);
     }
 
+    @Override
     public boolean isTokenExpired(RefreshToken token) {
         return token.getExpiryDate().isBefore(Instant.now());
     }

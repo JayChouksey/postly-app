@@ -13,6 +13,7 @@ import com.coditas.postly_app.repository.CommentRepository;
 import com.coditas.postly_app.repository.PostRepository;
 import com.coditas.postly_app.repository.ReviewLogRepository;
 import com.coditas.postly_app.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -40,6 +41,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentResponseDto addComment(CommentCreateRequestDto requestDto) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -76,6 +78,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentResponseDto updateComment(Long commentId, CommentUpdateRequestDto requestDto) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 
@@ -94,6 +97,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public CommentResponseDto reviewComment(Long commentId, ActionRequestDto action) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
@@ -127,6 +131,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public void deleteComment(Long commentId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new CustomException("Comment not found", HttpStatus.NOT_FOUND));
 

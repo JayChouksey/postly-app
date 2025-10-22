@@ -7,6 +7,7 @@ import com.coditas.postly_app.repository.AdminRequestRepository;
 import com.coditas.postly_app.repository.ModeratorRequestRepository;
 import com.coditas.postly_app.repository.RoleRepository;
 import com.coditas.postly_app.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
+    @Transactional
     public String deleteUser(Long id) {
 
         userRepository.deleteById(id);
@@ -58,6 +60,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserCreateRequestResponseDto createModeratorRequest(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
@@ -88,6 +91,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserRequestUpdateResponseDto reviewModeratorRequest(Long requestId, ActionRequestDto actionRequestDto) {
         ModeratorRequest request = moderatorRequestRepository.findById(requestId)
                 .orElseThrow(() -> new CustomException("Request not found", HttpStatus.NOT_FOUND));
@@ -126,6 +130,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public String resignAsModerator(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND));
 
@@ -139,6 +144,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public ApiResponseDto<?> createAdminRequest(UserCreateRequestDto userCreateRequestDto) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -190,6 +196,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserRequestUpdateResponseDto reviewAdminRequest(Long requestId, ActionRequestDto actionRequestDto) {
 
         // Fetch the request
